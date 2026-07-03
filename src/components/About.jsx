@@ -22,9 +22,59 @@ export default function About() {
     <section id="about" className="py-24 bg-cream relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Decorative divider ornament */}
+        {/* Decorative divider ornament with Framer Motion Book Opening */}
         <div className="ornamental-line">
-          <span className="ornamental-symbol">❦</span>
+          <div className="w-16 h-16 -my-4 mx-2 flex items-center justify-center shrink-0 text-gold">
+            <svg 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="w-8 h-8"
+            >
+              {/* Central Spine */}
+              <line x1="12" y1="5" x2="12" y2="19" className="stroke-gold" />
+              
+              {/* Left Page (morphing path) */}
+              <motion.path 
+                d="M12 5C9.5 5 5 7.5 5 19C7.5 19 12 17 12 17"
+                animate={{ 
+                  d: [
+                    "M12 5C12 5 12 5 12 19C12 19 12 17 12 17", // Closed
+                    "M12 5C9.5 5 5 7.5 5 19C7.5 19 12 17 12 17", // Open
+                  ]
+                }}
+                transition={{ 
+                  duration: 2.2, 
+                  repeat: Infinity, 
+                  repeatType: "reverse", 
+                  ease: "easeInOut" 
+                }}
+                className="stroke-gold fill-maroon/5"
+              />
+              
+              {/* Right Page (morphing path) */}
+              <motion.path 
+                d="M12 5C14.5 5 19 7.5 19 19C16.5 19 12 17 12 17"
+                animate={{ 
+                  d: [
+                    "M12 5C12 5 12 5 12 19C12 19 12 17 12 17", // Closed
+                    "M12 5C14.5 5 19 7.5 19 19C16.5 19 12 17 12 17", // Open
+                  ]
+                }}
+                transition={{ 
+                  duration: 2.2, 
+                  repeat: Infinity, 
+                  repeatType: "reverse", 
+                  ease: "easeInOut",
+                  delay: 0.1
+                }}
+                className="stroke-gold fill-maroon/5"
+              />
+            </svg>
+          </div>
         </div>
 
         <motion.div 
@@ -69,11 +119,41 @@ export default function About() {
             </motion.div>
           </div>
 
-          {/* Right Column: Key Inspiration Quote (The Turning Point) */}
-          <div className="lg:col-span-6">
+          {/* Right Column: Portrait and Inspiration Quote */}
+          <div className="lg:col-span-6 space-y-8">
+            
+            {/* Framed Portrait */}
             <motion.div 
               variants={itemVariants}
-              className="bg-cream-light p-6 sm:p-10 rounded-[2.5rem] shadow-xl border-l-4 border-maroon relative overflow-hidden"
+              className="relative bg-cream-light p-4 rounded-[2.5rem] border border-gold/25 shadow-xl max-w-sm mx-auto lg:ml-auto lg:mr-0"
+            >
+              {/* Traditional Vintage Frame Inner dashed border */}
+              <div className="absolute inset-2 border border-dashed border-gold/40 rounded-[2rem] pointer-events-none" />
+              
+              <div className="relative rounded-[1.8rem] overflow-hidden aspect-[4/5] border border-gold/15 bg-maroon/5 shadow-inner">
+                <img 
+                  src="/portrait.png" 
+                  alt="दशरथ पाटील - संस्थापक व अभिवाचक" 
+                  className="w-full h-full object-cover transition-all duration-700 transform hover:scale-105 hover:rotate-1"
+                />
+                
+                {/* Shading overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-maroon-dark/80 via-transparent to-transparent pointer-events-none" />
+                
+                {/* Founder Info Overlay */}
+                <div className="absolute bottom-5 left-5 right-5 text-cream space-y-1">
+                  <h4 className="font-serif text-2xl font-bold drop-shadow-md">दशरथ पाटील</h4>
+                  <p className="text-xs text-gold font-serif italic tracking-wide uppercase drop-shadow-sm">
+                    अभिवाचक आणि संस्थापक | बोलती पुस्तके
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Inspiration Quote */}
+            <motion.div 
+              variants={itemVariants}
+              className="bg-cream-light p-6 sm:p-8 rounded-[2.5rem] shadow-lg border-l-4 border-maroon relative overflow-hidden"
             >
               {/* Artistic quotation mark icon */}
               <span className="absolute -top-6 -right-6 text-[10rem] font-serif text-gold/10 leading-none pointer-events-none select-none">
@@ -86,7 +166,7 @@ export default function About() {
                   प्रेरणादायी क्षण
                 </div>
                 
-                <blockquote className="font-serif text-xl sm:text-2xl text-charcoal-dark italic leading-relaxed font-medium">
+                <blockquote className="font-serif text-lg sm:text-xl text-charcoal-dark italic leading-relaxed font-medium">
                   “अभिवाचन खूप सुंदर आहे! तुमच्या या प्रयत्नांमुळे आमच्यासारख्या अंध आणि वाचू न शकणाऱ्या लोकांसाठी मराठी साहित्याचा सुवर्ण खजिना कायमचा खुला झाला आहे...”
                 </blockquote>
                 
@@ -100,6 +180,7 @@ export default function About() {
                 </div>
               </div>
             </motion.div>
+
           </div>
 
         </motion.div>

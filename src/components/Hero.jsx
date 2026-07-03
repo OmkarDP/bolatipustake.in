@@ -32,7 +32,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-gold font-serif text-xl sm:text-2xl italic font-medium tracking-wide mt-2 block"
+              className="text-[#927334] font-serif text-xl sm:text-2xl italic font-bold tracking-wide mt-2 block"
             >
               "जेव्हा पुस्तके बोलू लागतात.."
             </motion.h2>

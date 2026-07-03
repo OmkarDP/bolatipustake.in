@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, CheckCircle, Quote } from 'lucide-react';
+import { BookOpen, CheckCircle, Quote, Headphones } from 'lucide-react';
 
 export default function Literature() {
   const primaryWorks = [
@@ -114,9 +114,10 @@ export default function Literature() {
                   href={work.link}  
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-maroon font-bold hover:underline"
+                  className="text-maroon hover:text-maroon-dark font-serif font-bold text-sm sm:text-base flex items-center gap-1.5 transition-colors duration-200"
                 >
-                  ऐका &rarr;
+                  <Headphones className="w-4 h-4 shrink-0 text-maroon" />
+                  <span>ऐका</span>
                 </a>
               </div>
             </motion.div>
