@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FAF6F0;
+    color: #2D2D2D;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Noto Serif Devanagari', serif;
+  }
+}
+
+/* Custom Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF6F0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C5A059;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7A0A1E;
+}
+
+/* Custom background patterns and borders */
+.gold-gradient-border {
+  border-image: linear-gradient(to right, #C5A059, #E6C687, #C5A059) 1;
+}
+
+.maroon-gradient-bg {
+  background: linear-gradient(135deg, #7A0A1E 0%, #540310 100%);
+}
+
+.cream-gradient-bg {
+  background: linear-gradient(180deg, #FDFBF7 0%, #FAF6F0 100%);
+}
+
+/* Custom separator */
+.ornamental-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.ornamental-line::before,
+.ornamental-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #C5A059, transparent);
+  max-width: 150px;
+}
+
+.ornamental-symbol {
+  margin: 0 1rem;
+  color: #C5A059;
+  font-size: 1.25rem;
+}
