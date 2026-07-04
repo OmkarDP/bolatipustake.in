@@ -4,7 +4,7 @@ import { HeartHandshake } from 'lucide-react';
 
 export default function SupportCTA() {
   return (
-    <section className="py-20 bg-cream relative overflow-hidden">
+    <section className="py-8 md:py-12 bg-cream relative overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Maroon banner */}

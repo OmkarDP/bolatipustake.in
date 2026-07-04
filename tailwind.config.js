@@ -18,14 +18,14 @@ export default {
           dark: '#540310',
         },
         gold: {
-          light: '#E6C687',
-          DEFAULT: '#C5A059',
-          dark: '#A37E39',
+          light: '#C5A059',
+          DEFAULT: '#8F6C2C',
+          dark: '#6E501C',
         },
         charcoal: {
-          light: '#555555',
-          DEFAULT: '#2D2D2D',
-          dark: '#1F1F1F',
+          light: '#3C3C3C',
+          DEFAULT: '#222222',
+          dark: '#141414',
         }
       },
       fontFamily: {

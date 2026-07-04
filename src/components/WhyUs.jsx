@@ -27,7 +27,7 @@ export default function WhyUs() {
   ];
 
   return (
-    <section className="py-24 bg-cream relative">
+    <section className="py-12 md:py-16 bg-cream relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title */}

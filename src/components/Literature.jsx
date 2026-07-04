@@ -44,7 +44,7 @@ export default function Literature() {
   ];
 
   return (
-    <section id="literature" className="py-24 bg-cream-light relative">
+    <section id="literature" className="py-12 md:py-16 bg-cream-light relative">
       <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-cream to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

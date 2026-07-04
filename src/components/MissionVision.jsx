@@ -4,7 +4,7 @@ import { Target, Eye } from 'lucide-react';
 
 export default function MissionVision() {
   return (
-    <section id="mission" className="py-24 bg-cream-light relative overflow-hidden">
+    <section id="mission" className="py-12 md:py-16 bg-cream-light relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-1/2 left-0 w-80 h-80 bg-maroon/5 rounded-full filter blur-3xl -translate-y-1/2 pointer-events-none" />
       <div className="absolute top-1/3 right-0 w-60 h-60 bg-gold/5 rounded-full filter blur-3xl pointer-events-none" />
