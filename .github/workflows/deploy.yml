@@ -1,0 +1,236 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Deploy workflow — BolatiPustake.in (Vite + React 19)
+#
+# Deploys the production build to AWS S3 and invalidates CloudFront.
+# Authentication uses GitHub OIDC — NO long-lived AWS credentials are stored.
+#
+# Required GitHub repository variables  (Settings → Secrets and variables → Variables):
+#   AWS_REGION                  e.g.  ap-south-1
+#   S3_BUCKET                   e.g.  bolatipustake-in-prod
+#   CLOUDFRONT_DISTRIBUTION_ID  e.g.  EXXXXXXXXXXXX
+#
+# Required GitHub repository secrets (Settings → Secrets and variables → Secrets):
+#   AWS_ROLE_ARN                e.g.  arn:aws:iam::123456789012:role/github-actions-deploy
+#
+# AWS trust-policy prerequisite (one-time setup):
+#   The IAM role must trust the GitHub OIDC provider and scope the sub claim to:
+#     token.actions.githubusercontent.com
+#   with condition:
+#     "sub": "repo:<org>/<repo>:ref:refs/heads/main"
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Deploy to AWS S3 + CloudFront
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main          # Run on every push to main (production branch)
+  workflow_dispatch:  # Allow manual runs from the GitHub Actions UI
+
+# ── Concurrency ───────────────────────────────────────────────────────────────
+# Prevent multiple simultaneous deployments for the same branch.
+# A new run cancels any in-progress run for the same concurrency group.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Global permissions (principle of least privilege) ─────────────────────────
+# contents:read  — needed by actions/checkout to clone the repository
+# id-token:write — needed by aws-actions/configure-aws-credentials to request
+#                  a short-lived OIDC token from GitHub and exchange it for
+#                  temporary AWS credentials (replaces long-lived access keys)
+permissions:
+  contents: read
+  id-token: write
+
+# ── Environment variables shared across all steps ─────────────────────────────
+env:
+  # Vite's default build output directory (no custom outDir in vite.config.js)
+  BUILD_DIR: dist
+  # Node.js version — no .nvmrc or engines field found; defaulting to LTS 22
+  NODE_VERSION: "22"
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    # Cap total job runtime. Prevents runaway jobs from consuming minutes.
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. Validate required configuration ──────────────────────────────────
+      # Fail fast with a human-readable error before wasting build time if any
+      # required repository variable or secret is not configured.
+      - name: Validate required secrets and variables
+        shell: bash
+        env:
+          _AWS_REGION:                 ${{ vars.AWS_REGION }}
+          _S3_BUCKET:                  ${{ vars.S3_BUCKET }}
+          _CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+          _AWS_ROLE_ARN:               ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          MISSING=()
+
+          [[ -z "$_AWS_REGION" ]]                 && MISSING+=("vars.AWS_REGION")
+          [[ -z "$_S3_BUCKET" ]]                  && MISSING+=("vars.S3_BUCKET")
+          [[ -z "$_CLOUDFRONT_DISTRIBUTION_ID" ]] && MISSING+=("vars.CLOUDFRONT_DISTRIBUTION_ID")
+          [[ -z "$_AWS_ROLE_ARN" ]]               && MISSING+=("secrets.AWS_ROLE_ARN")
+
+          if [[ ${#MISSING[@]} -gt 0 ]]; then
+            echo "❌ Deployment aborted — the following repository configuration is missing:"
+            for item in "${MISSING[@]}"; do
+              echo "   • $item"
+            done
+            echo ""
+            echo "Add these under: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+          echo "✅ All required secrets and variables are present."
+
+      # ── 2. Checkout source code ──────────────────────────────────────────────
+      # actions/checkout@v4 clones the repository at the triggering commit.
+      # fetch-depth: 1 (shallow clone) is the default and keeps the checkout fast.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 3. Set up Node.js with dependency caching ────────────────────────────
+      # actions/setup-node@v4 installs the specified Node version.
+      # cache: 'npm' automatically caches ~/.npm keyed on package-lock.json,
+      # dramatically speeding up subsequent runs when dependencies haven't changed.
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      # ── 4. Install dependencies (clean install) ───────────────────────────────
+      # `npm ci` installs exactly what is in package-lock.json, refuses to mutate
+      # it, and is therefore reproducible and safe for CI environments.
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 5. Build the production bundle ───────────────────────────────────────
+      # `vite build` compiles and tree-shakes the app, outputs to ./dist.
+      # Hashed filenames (e.g. index-BcD3f9xQ.js) are produced by Vite by default,
+      # enabling long-lived Cache-Control headers for assets.
+      # The shell's `pipefail` + `errexit` (set by GitHub by default) ensures any
+      # build error exits the step immediately with a non-zero code.
+      - name: Build production bundle
+        run: npm run build
+        env:
+          # Tell Node/Vite this is a CI environment (disables interactive prompts)
+          CI: "true"
+
+      # ── 6. Verify build output exists ────────────────────────────────────────
+      # An extra guard: fail loudly if the dist directory wasn't created,
+      # rather than deploying an empty bucket.
+      - name: Verify build output
+        run: |
+          if [[ ! -d "${{ env.BUILD_DIR }}" ]]; then
+            echo "❌ Build output directory '${{ env.BUILD_DIR }}' not found."
+            echo "   Check your vite.config.js 'build.outDir' setting."
+            exit 1
+          fi
+          echo "✅ Build directory found:"
+          ls -lh "${{ env.BUILD_DIR }}"
+
+      # ── 7. Authenticate to AWS via GitHub OIDC ────────────────────────────────
+      # This is the key step. GitHub mints a short-lived OIDC JWT, which is sent
+      # to AWS STS via AssumeRoleWithWebIdentity. AWS validates the JWT against
+      # the GitHub OIDC provider registered in your account and returns temporary
+      # credentials scoped to the IAM role.
+      #
+      # ⚠️  NO long-lived AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are used.
+      # ⚠️  Credentials auto-expire after 1 hour (configurable on the IAM role).
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume:   ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:       ${{ vars.AWS_REGION }}
+          # role-session-name is optional but helps audit CloudTrail logs
+          role-session-name: github-actions-deploy-${{ github.run_id }}
+
+      # ── 8. Sync build output to S3 ───────────────────────────────────────────
+      # `aws s3 sync` uploads only changed files, making deploys incremental.
+      #
+      # --delete              Removes files from S3 that no longer exist in dist/,
+      #                       keeping the bucket in sync with the build output.
+      #
+      # --cache-control for hashed assets:
+      #   Vite emits files like assets/index-BcD3f9xQ.js. Because the hash
+      #   changes with content, these files are immutable and can be cached
+      #     indefinitely (max-age=31536000, immutable).
+      #
+      # --cache-control for HTML:
+      #   index.html must NOT be aggressively cached — it is the entry point
+      #   and must always reflect the latest deploy. We set no-cache so browsers
+      #   always revalidate it.
+      #
+      # Two-pass sync strategy:
+      #   Pass 1 — upload hashed assets with long cache headers
+      #   Pass 2 — upload everything else (HTML, robots.txt, etc.) with no-cache
+      - name: Sync hashed assets to S3 (long cache)
+        run: |
+          aws s3 sync "${{ env.BUILD_DIR }}" "s3://${{ vars.S3_BUCKET }}" \
+            --region "${{ vars.AWS_REGION }}" \
+            --delete \
+            --exclude "*" \
+            --include "assets/*" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --metadata-directive REPLACE
+
+      - name: Sync remaining files to S3 (no cache)
+        run: |
+          aws s3 sync "${{ env.BUILD_DIR }}" "s3://${{ vars.S3_BUCKET }}" \
+            --region "${{ vars.AWS_REGION }}" \
+            --delete \
+            --exclude "assets/*" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --metadata-directive REPLACE
+
+      # ── 9. Invalidate CloudFront cache ────────────────────────────────────────
+      # After S3 is updated, CloudFront edge nodes may still serve stale cached
+      # responses. Invalidating /index.html forces all edges to fetch the new
+      # version from S3 on the next request.
+      #
+      # Hashed asset files (e.g. assets/index-BcD3f9xQ.js) are NOT invalidated:
+      #   • Their filenames change with every build (content-hash), so CloudFront
+      #     will naturally serve the new file — the old URL is never requested again.
+      #   • Unnecessary invalidations cost money ($0.005 per 1,000 paths after
+      #     the free 1,000/month threshold) and add latency to the deployment.
+      #
+      # Additional paths to add if your app has other non-hashed entry points
+      # (e.g. a 404.html for SPA routing), append them to the --paths argument.
+      - name: Invalidate CloudFront cache for index.html
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/index.html" \
+            --query "Invalidation.Id" \
+            --output text)
+
+          echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+          echo "   Distribution: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "   Paths invalidated: /index.html"
+          echo ""
+          echo "ℹ️  Hashed assets (assets/*) are NOT invalidated — their URLs"
+          echo "    change with each build, so old URLs are never requested again."
+
+      # ── 10. Deployment summary ────────────────────────────────────────────────
+      # Print a concise deployment summary to the job log for easy auditing.
+      - name: Deployment summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Deployment complete — BolatiPustake.in"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  Commit    : ${{ github.sha }}"
+          echo "  Branch    : ${{ github.ref_name }}"
+          echo "  Actor     : ${{ github.actor }}"
+          echo "  Run ID    : ${{ github.run_id }}"
+          echo "  S3 Bucket : s3://${{ vars.S3_BUCKET }}"
+          echo "  Region    : ${{ vars.AWS_REGION }}"
+          echo "  CF Dist   : ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
