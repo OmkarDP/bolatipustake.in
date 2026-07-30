@@ -145,13 +145,127 @@ jobs:
       #
       # ⚠️  NO long-lived AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are used.
       # ⚠️  Credentials auto-expire after 1 hour (configurable on the IAM role).
+
+      # ── [TEMP DEBUG] ─────────────────────────────────────────────────────────
+      # The following three steps are TEMPORARY diagnostics for troubleshooting
+      # GitHub OIDC authentication. Remove them once OIDC succeeds consistently.
+      # ─────────────────────────────────────────────────────────────────────────
+
+      # [TEMP DEBUG 1/3] Print GitHub context values that AWS uses to evaluate
+      # the IAM role trust policy sub-claim condition. Compare these values
+      # against your IAM trust policy's StringLike / StringEquals conditions.
+      - name: "[TEMP DEBUG] Debug GitHub Context"
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔍 GitHub OIDC Context (used to build the 'sub' claim)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  repository  : ${{ github.repository }}"
+          echo "  ref         : ${{ github.ref }}"
+          echo "  ref_name    : ${{ github.ref_name }}"
+          echo "  event_name  : ${{ github.event_name }}"
+          echo "  actor       : ${{ github.actor }}"
+          echo "  workflow    : ${{ github.workflow }}"
+          echo "  run_id      : ${{ github.run_id }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "ℹ️  Expected 'sub' claim format:"
+          echo "   repo:${{ github.repository }}:ref:${{ github.ref }}"
+          echo ""
+          echo "   Your IAM trust policy condition must match this exact value."
+
+      # [TEMP DEBUG 2/3] Confirm AWS_ROLE_ARN secret is present in this run.
+      # Does NOT print the ARN itself to avoid leaking it into public logs.
+      - name: "[TEMP DEBUG] Validate AWS Role ARN"
+        shell: bash
+        env:
+          _AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          if [[ -z "$_AWS_ROLE_ARN" ]]; then
+            echo "❌ secrets.AWS_ROLE_ARN is not set for this run."
+            echo ""
+            echo "   Fix: Settings → Secrets and variables → Actions → New repository secret"
+            echo "   Name : AWS_ROLE_ARN"
+            echo "   Value: arn:aws:iam::<account-id>:role/<role-name>"
+            exit 1
+          fi
+          echo "✅ AWS_ROLE_ARN is configured."
+          echo "   (Value is intentionally not printed to protect the ARN.)"
+
+      # ── [END TEMP DEBUG PRE-OIDC] ─────────────────────────────────────────────
+
+      # [TEMP DEBUG 3/3 — on the OIDC step itself]
+      # ACTIONS_STEP_DEBUG=true enables verbose SDK logging inside the action.
+      # AWS_STS_REGIONAL_ENDPOINTS=regional forces STS calls to the regional
+      # endpoint (e.g. sts.ap-south-1.amazonaws.com) instead of the global one,
+      # which is required in some opt-in regions and avoids token-validation races.
+      # Neither env var changes any action input or deployment behaviour.
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume:   ${{ secrets.AWS_ROLE_ARN }}
-          aws-region:       ${{ vars.AWS_REGION }}
+          role-to-assume:    ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:        ${{ vars.AWS_REGION }}
           # role-session-name is optional but helps audit CloudTrail logs
           role-session-name: github-actions-deploy-${{ github.run_id }}
+        env:
+          # [TEMP DEBUG] Enable verbose step-level debug logging for this action.
+          # Remove once OIDC auth is confirmed working.
+          ACTIONS_STEP_DEBUG: "true"
+          # [TEMP DEBUG] Force regional STS endpoint to avoid global STS issues.
+          # Remove once OIDC auth is confirmed working.
+          AWS_STS_REGIONAL_ENDPOINTS: regional
+
+      # [TEMP DEBUG] Print the assumed role identity immediately after OIDC succeeds.
+      # This confirms which account/role the runner is acting as.
+      # Remove once OIDC auth is confirmed working.
+      - name: "[TEMP DEBUG] Verify assumed role identity"
+        run: |
+          echo "🔍 Verifying assumed role via aws sts get-caller-identity ..."
+          aws sts get-caller-identity
+          echo ""
+          echo "✅ The above confirms OIDC succeeded and the correct role was assumed."
+
+      # [TEMP DEBUG] Failure hint — runs even if Configure AWS credentials fails
+      # (continue-on-error: true on the OIDC step above is NOT set intentionally;
+      # this step uses 'if: failure()' to catch the failure while still letting
+      # the job fail at the end).
+      # Remove once OIDC auth is confirmed working.
+      - name: "[TEMP DEBUG] OIDC failure diagnostics"
+        if: failure()
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ Configure AWS credentials failed — OIDC troubleshooting guide"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Check each item below against your AWS IAM configuration:"
+          echo ""
+          echo "1. IAM Trust Policy"
+          echo "   • The role's trust policy must allow Action: sts:AssumeRoleWithWebIdentity"
+          echo "   • Principal must be: Federated: arn:aws:iam::<account>:oidc-provider/token.actions.githubusercontent.com"
+          echo ""
+          echo "2. GitHub OIDC Provider in AWS"
+          echo "   • Must exist in your AWS account under IAM → Identity providers"
+          echo "   • URL  : https://token.actions.githubusercontent.com"
+          echo "   • Audience (ClientID): sts.amazonaws.com"
+          echo ""
+          echo "3. Repository name in the trust condition"
+          echo "   • Your trust policy sub condition must match:"
+          echo "     repo:${{ github.repository }}:ref:refs/heads/${{ github.ref_name }}"
+          echo "   • A common mistake is using the wrong case, org name, or branch name."
+          echo ""
+          echo "4. Branch"
+          echo "   • This run was triggered from: ${{ github.ref }}"
+          echo "   • If your trust policy scopes to refs/heads/main, only pushes"
+          echo "     to 'main' will succeed. workflow_dispatch also uses the selected branch."
+          echo ""
+          echo "5. secrets.AWS_ROLE_ARN"
+          echo "   • Verify the ARN is correct: Settings → Secrets → AWS_ROLE_ARN"
+          echo "   • Format: arn:aws:iam::<12-digit-account-id>:role/<role-name>"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      # ── [END TEMP DEBUG] ──────────────────────────────────────────────────────
 
       # ── 8. Sync build output to S3 ───────────────────────────────────────────
       # `aws s3 sync` uploads only changed files, making deploys incremental.
