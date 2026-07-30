@@ -1,30 +1,23 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Headphones, Heart, Landmark, Accessibility } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function WhyUs() {
-  const features = [
-    {
-      title: 'अस्सल व भावपूर्ण अभिवाचन',
-      description: 'दशरथ पाटील यांच्या भारदस्त, स्पष्ट आणि भावनाप्रधान आवाजात प्रत्येक व्यक्तिरेखा जिवंत होते, ज्यामुळे श्रोते थेट कथेशी जोडले जातात.',
-      icon: <Headphones className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'ग्रामीण व बोलीभाषेचा आदर',
-      description: 'अस्सल मातीतील मराठी आणि ग्रामीण बोली भाषेतील साहित्य ऐकवण्यावर आमचा विशेष भर असतो, ज्याला श्रोत्यांचा उदंड प्रतिसाद मिळतो.',
-      icon: <Heart className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'सांस्कृतिक वारशाचे जतन',
-      description: 'काळाच्या ओघात विस्मरणात गेलेल्या जुन्या दर्जेदार कथा आणि दुर्मिळ कादंबऱ्या ऑडिओ स्वरूपात आणून आम्ही भाषेचा ऐतिहासिक ठेवा जपतो.',
-      icon: <Landmark className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'दृष्टिहीन बांधवांसाठी उपयुक्त',
-      description: 'वाचण्याची क्षमता नसलेल्या आणि अंध साहित्यप्रेमी मित्रांना समृद्ध मराठी साहित्य सहज ऐकता यावे यासाठी आमचे व्यासपीठ पूर्णपणे समर्पित आहे.',
-      icon: <Accessibility className="w-6 h-6 text-maroon" />
-    }
+  const { t } = useLanguage();
+
+  const rawFeatures = t('whyUs.features') || [];
+  const icons = [
+    <Headphones className="w-6 h-6 text-maroon" />,
+    <Heart className="w-6 h-6 text-maroon" />,
+    <Landmark className="w-6 h-6 text-maroon" />,
+    <Accessibility className="w-6 h-6 text-maroon" />
   ];
+
+  const features = rawFeatures.map((f, idx) => ({
+    ...f,
+    icon: icons[idx % icons.length]
+  }));
 
   return (
     <section className="py-12 md:py-16 bg-cream relative">
@@ -32,12 +25,12 @@ export default function WhyUs() {
         
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">खासियत</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('whyUs.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            बोलती पुस्तके का निवडावीत?
+            {t('whyUs.title')}
           </h2>
           <p className="text-charcoal-light text-sm sm:text-base leading-relaxed">
-            साहित्याची गोडी वाढवणारे आणि प्रत्येकाला सामावून घेणारे आमचे प्रमुख गुणविशेष.
+            {t('whyUs.subtitle')}
           </p>
           <div className="h-[2px] w-24 bg-gold mx-auto mt-2" />
         </div>

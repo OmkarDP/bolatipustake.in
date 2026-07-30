@@ -11,8 +11,9 @@ import SupportCTA from './components/SupportCTA';
 import Contact from './components/Contact';
 import Sitemap from './components/Sitemap';
 import Footer from './components/Footer';
+import { LanguageProvider } from './context/LanguageContext';
 
-function App() {
+function AppContent() {
   return (
     <div className="bg-cream min-h-screen text-charcoal font-sans selection:bg-maroon selection:text-cream">
       {/* Sticky Header Navigation */}
@@ -54,6 +55,14 @@ function App() {
       {/* Footer Branding and Legal Policies Links */}
       <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
 

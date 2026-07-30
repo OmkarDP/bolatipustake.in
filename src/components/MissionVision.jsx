@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Eye } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MissionVision() {
+  const { t } = useLanguage();
+
   return (
     <section id="mission" className="py-12 md:py-16 bg-cream-light relative overflow-hidden">
       {/* Background decorations */}
@@ -13,9 +16,9 @@ export default function MissionVision() {
         
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">उद्दिष्ट्ये</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('missionVision.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            ध्येय आणि संकल्पना
+            {t('missionVision.title')}
           </h2>
           <div className="h-[2px] w-24 bg-gold mx-auto mt-2" />
         </div>
@@ -36,14 +39,14 @@ export default function MissionVision() {
                 <Target className="w-8 h-8" />
               </div>
               <h3 className="font-serif text-2xl font-bold text-maroon mb-4">
-                आमचे ध्येय (Mission)
+                {t('missionVision.missionTitle')}
               </h3>
               <p className="text-charcoal-light leading-relaxed text-base sm:text-lg">
-                दर्जेदार मराठी साहित्याची आणि बोलीभाषेची गोडी तरुण पिढीमध्ये रुजवणे. काळाच्या ओघात विस्मरणात चाललेला हा अभिजात ठेवा डिजिटल ऑडिओबुक्सच्या स्वरूपात जागतिक पातळीवर प्रत्येक मराठी घरापर्यंत सहज आणि विनामूल्य उपलब्ध करून देणे.
+                {t('missionVision.missionDesc')}
               </p>
             </div>
             <div className="border-t border-gold/20 pt-6 mt-8 flex items-center gap-2 text-xs font-serif text-gold font-bold">
-              <span>भाषा समृद्धी हाच आमचा ध्यास</span>
+              <span>{t('missionVision.missionFooter')}</span>
             </div>
           </motion.div>
 
@@ -60,14 +63,14 @@ export default function MissionVision() {
                 <Eye className="w-8 h-8" />
               </div>
               <h3 className="font-serif text-2xl font-bold text-gold-dark mb-4">
-                आमचे स्वप्न (Vision)
+                {t('missionVision.visionTitle')}
               </h3>
               <p className="text-charcoal-light leading-relaxed text-base sm:text-lg">
-                लेखक, प्रकाशक आणि श्रोते यांना जोडणारी एक अद्ययावत मराठी ऑडिओबुक डिजिटल परिसंस्था (App) उभी करणे. याद्वारे लेखकांच्या हक्कांचे व रॉयल्टीचे सन्मानपूर्वक संरक्षण करून मराठी साहित्याला व्यावसायिकदृष्ट्या सक्षम करणे.
+                {t('missionVision.visionDesc')}
               </p>
             </div>
             <div className="border-t border-gold/20 pt-6 mt-8 flex items-center gap-2 text-xs font-serif text-maroon font-bold">
-              <span>डिजिटल युगात मराठी साहित्याचा गौरव</span>
+              <span>{t('missionVision.visionFooter')}</span>
             </div>
           </motion.div>
 

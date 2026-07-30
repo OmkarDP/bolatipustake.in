@@ -18,114 +18,100 @@ import {
   Eye,
   Server
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Sitemap() {
-  const [activeTab, setActiveTab] = useState('visual'); // 'visual' or 'technical'
+  const [activeTab, setActiveTab] = useState('visual');
+  const { t } = useLanguage();
 
-  // Map nodes representing the website structure
+  const sectionsData = t('sitemap.sections') || {};
+
   const mainSections = [
     {
       id: 'home',
-      name: 'मुख्यपृष्ठ (Home)',
+      name: sectionsData.home?.name || 'मुख्यपृष्ठ',
       icon: <Home className="w-5 h-5" />,
-      desc: 'परिचय आणि मुख्य चॅनेल लिंक्स',
-      details: 'बोलती पुस्तके चळवळीचा परिचय, प्रमुख ऑडिओबुक चॅनेलच्या लिंक्स आणि मुखपृष्ठ.'
+      desc: sectionsData.home?.desc || '',
+      details: sectionsData.home?.details || ''
     },
     {
       id: 'about',
-      name: 'आमच्याविषयी (About Us)',
+      name: sectionsData.about?.name || 'आमच्याविषयी',
       icon: <User className="w-5 h-5" />,
-      desc: 'चळवळीची कहाणी आणि संस्थापक',
-      details: 'लॉकडाऊनमधील सुरुवात, दशरथ पाटील (अभिवाचक व संस्थापक) यांचा परिचय आणि श्रोत्यांचे अनुभव.'
+      desc: sectionsData.about?.desc || '',
+      details: sectionsData.about?.details || ''
     },
     {
       id: 'stats',
-      name: 'आकडेवारी (Stats)',
+      name: sectionsData.stats?.name || 'आकडेवारी',
       icon: <BarChart3 className="w-5 h-5" />,
-      desc: 'प्रसार आणि प्रभाव आकडेवारी',
-      details: '३००+ कादंबऱ्या, ५०००+ कथा, १५,०००+ श्रोते आणि विनामूल्य शिक्षणाचा प्रसार.'
+      desc: sectionsData.stats?.desc || '',
+      details: sectionsData.stats?.details || ''
     },
     {
       id: 'journey',
-      name: 'आमचा प्रवास (Journey)',
+      name: sectionsData.journey?.name || 'आमचा प्रवास',
       icon: <Compass className="w-5 h-5" />,
-      desc: 'चळवळीची टाइमलाईन',
-      details: '२०२० च्या लॉकडाऊनपासून ते आजपर्यंतच्या यशस्वी प्रवासाचे प्रमुख टप्पे.'
+      desc: sectionsData.journey?.desc || '',
+      details: sectionsData.journey?.details || ''
     },
     {
       id: 'mission',
-      name: 'ध्येय आणि उद्दिष्टे (Mission)',
+      name: sectionsData.mission?.name || 'ध्येय आणि उद्दिष्टे',
       icon: <Target className="w-5 h-5" />,
-      desc: 'उद्दिष्टे आणि संस्कृती',
-      details: 'मराठी भाषा आणि साहित्याचा डिजिटल माध्यमातून जगभर प्रसार करण्याचे आमचे ध्येय.'
+      desc: sectionsData.mission?.desc || '',
+      details: sectionsData.mission?.details || ''
     },
     {
       id: 'why-us',
-      name: 'खासियत (Why Us)',
+      name: sectionsData.whyUs?.name || 'खासियत',
       icon: <Award className="w-5 h-5" />,
-      desc: 'अभिवाचनाचे वैशिष्ट्ये',
-      details: 'अस्सल बोलीभाषा, उत्कृष्ट आवाज गुणवत्ता, दुर्मिळ ग्रंथांचे जतन आणि दृष्टिहीन बांधवांसाठी उपयुक्तता.'
+      desc: sectionsData.whyUs?.desc || '',
+      details: sectionsData.whyUs?.details || ''
     },
     {
       id: 'literature',
-      name: 'साहित्य संग्रह (Literature)',
+      name: sectionsData.literature?.name || 'साहित्य संग्रह',
       icon: <BookOpen className="w-5 h-5" />,
-      desc: 'लेखक व साहित्य सूची',
-      details: 'लक्ष्मण गायकवाड, शरणकुमार लिंबाळे, उर्मिला पवार यांसारख्या थोर लेखकांच्या साहित्याचे ऑडिओ स्वरूप.'
+      desc: sectionsData.literature?.desc || '',
+      details: sectionsData.literature?.details || ''
     },
     {
       id: 'support',
-      name: 'सहभागी व्हा (Support)',
+      name: sectionsData.support?.name || 'सहभागी व्हा',
       icon: <HandHeart className="w-5 h-5" />,
-      desc: 'चळवळीत सहभाग',
-      details: 'श्रोते व वाचक म्हणून बोलती पुस्तके चळवळीला सहकार्य आणि प्रसाराचे आवाहन.'
+      desc: sectionsData.support?.desc || '',
+      details: sectionsData.support?.details || ''
     },
     {
       id: 'contact',
-      name: 'संपर्क (Contact)',
+      name: sectionsData.contact?.name || 'संपर्क',
       icon: <Phone className="w-5 h-5" />,
-      desc: 'संपर्क फॉर्म व सोशल लिंक्स',
-      details: 'थेट संपर्क साधण्यासाठी फॉर्म, ई-मेल, व्हॉट्सॲप आणि युट्युब चॅनेलचे लिंक्स.'
+      desc: sectionsData.contact?.desc || '',
+      details: sectionsData.contact?.details || ''
     }
   ];
 
-  const policySections = [
-    {
-      id: 'privacy',
-      name: 'गोपनीयता धोरण (Privacy Policy)',
-      icon: <FileText className="w-4 h-4" />,
-      desc: 'वापरकर्त्यांच्या डेटाचे संरक्षण व गोपनीयता नियम.'
-    },
-    {
-      id: 'terms',
-      name: 'नियम आणि शर्ती (Terms & Conditions)',
-      icon: <FileText className="w-4 h-4" />,
-      desc: 'वेबसाईट आणि चॅनेल वापरण्याचे मार्गदर्शक नियम.'
-    }
-  ];
+  const policySectionsRaw = t('sitemap.policies') || [];
+  const policySections = policySectionsRaw.map((p, idx) => ({
+    id: idx === 0 ? 'privacy' : 'terms',
+    name: p.name,
+    icon: <FileText className="w-4 h-4" />,
+    desc: p.desc
+  }));
 
-  const techFeatures = [
-    {
-      title: 'सिंगल-पेज आर्किटेक्चर (SPA)',
-      desc: 'रिएक्ट आणि लाईटवेट राउटिंगचा वापर करून अखंडित व जलद अनुभव.',
-      icon: <Code className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'पूर्णपणे रिस्पॉन्सिव्ह डिझाइन',
-      desc: 'मोबाईल, टॅब्लेट आणि कॉम्प्युटर अशा सर्व आकारांच्या स्क्रीनवर उत्कृष्ट सादरीकरण.',
-      icon: <Smartphone className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'अँक्सेसिबिलिटी आणि सुलभता',
-      desc: 'दृष्टिहीन आणि ज्येष्ठ श्रोत्यांच्या सुलभतेसाठी सुवाच्य फॉन्ट आणि सोपी नेव्हिगेशन रचना.',
-      icon: <Eye className="w-6 h-6 text-maroon" />
-    },
-    {
-      title: 'वेगवान परफॉर्मन्स (Vite)',
-      desc: 'Vite द्वारे ऑप्टिमाइझ केलेले कोड बंडल आणि जलद लोडिंग गती.',
-      icon: <Server className="w-6 h-6 text-maroon" />
-    }
+  const techFeaturesRaw = t('sitemap.techFeatures') || [];
+  const techIcons = [
+    <Code className="w-6 h-6 text-maroon" />,
+    <Smartphone className="w-6 h-6 text-maroon" />,
+    <Eye className="w-6 h-6 text-maroon" />,
+    <Server className="w-6 h-6 text-maroon" />
   ];
+  const techFeatures = techFeaturesRaw.map((tf, idx) => ({
+    title: tf.title,
+    desc: tf.desc,
+    icon: techIcons[idx % techIcons.length]
+  }));
 
   const handleScrollTo = (id) => {
     const element = document.getElementById(id);
@@ -149,12 +135,12 @@ export default function Sitemap() {
 
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">संरचना आणि मार्गदर्शिका</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('sitemap.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            वेबसाईट साईटमॅप आणि रचना
+            {t('sitemap.title')}
           </h2>
           <p className="text-charcoal-light text-sm sm:text-base leading-relaxed">
-            आमच्या डिजिटल व्यासपीठाची संपूर्ण रचना आणि तांत्रिक वैशिष्ट्ये एकाच ठिकाणी पहा.
+            {t('sitemap.subtitle')}
           </p>
           
           {/* Custom Tabs */}
@@ -169,7 +155,7 @@ export default function Sitemap() {
             >
               <span className="flex items-center gap-2">
                 <Network className="w-4 h-4" />
-                रचनात्मक साईटमॅप
+                {t('sitemap.tabVisual')}
               </span>
             </button>
             <button
@@ -182,7 +168,7 @@ export default function Sitemap() {
             >
               <span className="flex items-center gap-2">
                 <Code className="w-4 h-4" />
-                तांत्रिक माहिती
+                {t('sitemap.tabTech')}
               </span>
             </button>
           </div>
@@ -229,7 +215,7 @@ export default function Sitemap() {
                     </div>
                     
                     <div className="flex items-center gap-1 text-xs font-semibold text-maroon group-hover:text-gold transition-colors duration-200 mt-4 pt-4 border-t border-gold/10">
-                      भेट द्या <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                      {t('sitemap.visitLink')} <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>
                 ))}
@@ -239,7 +225,7 @@ export default function Sitemap() {
               <div className="bg-cream/50 border border-gold/15 p-6 rounded-3xl mt-8">
                 <h4 className="font-serif text-lg font-bold text-maroon mb-4 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-gold" />
-                  उपयुक्त धोरणे व लिंक्स
+                  {t('sitemap.policyTitle')}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {policySections.map((policy) => (
@@ -298,23 +284,23 @@ export default function Sitemap() {
               {/* Tech Spec Box */}
               <div className="md:col-span-2 bg-maroon text-cream p-8 rounded-3xl border border-gold/30 space-y-4">
                 <h4 className="font-serif text-xl font-bold text-gold-light">
-                  विकास रचना वैशिष्ट्ये (System Specs)
+                  {t('sitemap.techSpecsTitle')}
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs sm:text-sm">
                   <div className="border-r border-gold/25 pr-4">
-                    <span className="text-gold-light block font-semibold mb-1">फ्रेमवर्क</span>
+                    <span className="text-gold-light block font-semibold mb-1">Framework</span>
                     <span>React 19 & Vite 8</span>
                   </div>
                   <div className="border-r border-gold/25 pr-4">
-                    <span className="text-gold-light block font-semibold mb-1">शैली (Styling)</span>
+                    <span className="text-gold-light block font-semibold mb-1">Styling</span>
                     <span>Tailwind CSS</span>
                   </div>
                   <div className="border-r border-gold/25 pr-4">
-                    <span className="text-gold-light block font-semibold mb-1">अ‍ॅनिमेशन्स</span>
+                    <span className="text-gold-light block font-semibold mb-1">Animations</span>
                     <span>Framer Motion</span>
                   </div>
                   <div>
-                    <span className="text-gold-light block font-semibold mb-1">चिन्हे (Icons)</span>
+                    <span className="text-gold-light block font-semibold mb-1">Icons</span>
                     <span>Lucide React</span>
                   </div>
                 </div>

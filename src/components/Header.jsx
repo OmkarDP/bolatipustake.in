@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { lang, toggleLanguage, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,13 +21,13 @@ export default function Header() {
   }, []);
 
   const navItems = [
-    { name: 'मुख्यपृष्ठ', href: '#home' },
-    { name: 'आमच्याविषयी', href: '#about' },
-    { name: 'आमचा प्रवास', href: '#journey' },
-    { name: 'साहित्य संग्रह', href: '#literature' },
-    { name: 'आमचे ध्येय', href: '#mission' },
-    { name: 'संपर्क', href: '#contact' },
-    { name: 'साईटमॅप', href: '#sitemap' },
+    { name: t('nav.home'), href: '#home' },
+    { name: t('nav.about'), href: '#about' },
+    { name: t('nav.journey'), href: '#journey' },
+    { name: t('nav.literature'), href: '#literature' },
+    { name: t('nav.mission'), href: '#mission' },
+    { name: t('nav.contact'), href: '#contact' },
+    { name: t('nav.sitemap'), href: '#sitemap' },
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -49,35 +51,68 @@ export default function Header() {
             />
             <div className="flex flex-col">
               <span className="font-serif text-xl sm:text-2xl font-bold text-maroon leading-tight tracking-wide">
-                बोलती पुस्तके
+                 बोलती पुस्तके
               </span>
               <span className="text-[10px] sm:text-xs text-gold font-medium uppercase tracking-widest leading-none">
-                मराठी साहित्याचा आवाज
+                {t('nav.tagline')}
               </span>
             </div>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="font-medium text-charcoal hover:text-maroon transition-colors duration-200 text-sm lg:text-base relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:height-[2px] after:bg-gold hover:after:w-full after:transition-all after:duration-300"
-              >
-                {item.name}
-              </a>
-            ))}
+          {/* Desktop Navigation & Compact Language Toggle */}
+          <div className="hidden md:flex items-center gap-6">
+            <nav className="flex items-center gap-6 lg:gap-8">
+              {navItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="font-medium text-charcoal hover:text-maroon transition-colors duration-200 text-sm lg:text-base relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:height-[2px] after:bg-gold hover:after:w-full after:transition-all after:duration-300"
+                >
+                  {item.name}
+                </a>
+              ))}
+            </nav>
+
+            {/* Compact Top Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="inline-flex items-center p-0.5 rounded-full bg-cream border border-gold/40 shadow-sm hover:border-maroon/40 transition-all duration-300 cursor-pointer"
+              title={lang === 'mr' ? 'Switch to English' : 'मराठीमध्ये बदला'}
+              aria-label="Toggle Language"
+            >
+              <span className={`px-2 py-0.5 rounded-full text-xs font-serif transition-all duration-300 ${lang === 'mr' ? 'bg-maroon text-cream font-bold shadow-xs' : 'text-charcoal-light hover:text-maroon'}`}>
+                म
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-sans transition-all duration-300 ${lang === 'en' ? 'bg-maroon text-cream font-bold shadow-xs' : 'text-charcoal-light hover:text-maroon'}`}>
+                EN
+              </span>
+            </button>
+
             <a
               href="#contact"
               className="bg-maroon hover:bg-maroon-light text-cream px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 shadow-sm border border-gold/10 hover:shadow-md"
             >
-              सहभागी व्हा
+              {t('nav.cta')}
             </a>
-          </nav>
+          </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile Right Bar: Language Toggle + Menu Button */}
+          <div className="flex items-center gap-3 md:hidden">
+            {/* Mobile Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="inline-flex items-center p-0.5 rounded-full bg-cream border border-gold/40 shadow-sm transition-all duration-300 cursor-pointer"
+              title={lang === 'mr' ? 'Switch to English' : 'मराठीमध्ये बदला'}
+              aria-label="Toggle Language"
+            >
+              <span className={`px-2 py-0.5 rounded-full text-xs font-serif transition-all duration-300 ${lang === 'mr' ? 'bg-maroon text-cream font-bold shadow-xs' : 'text-charcoal-light'}`}>
+                म
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-sans transition-all duration-300 ${lang === 'en' ? 'bg-maroon text-cream font-bold shadow-xs' : 'text-charcoal-light'}`}>
+                EN
+              </span>
+            </button>
+
             <button
               onClick={toggleMenu}
               className="text-charcoal hover:text-maroon focus:outline-none p-2 rounded-lg"
@@ -102,7 +137,7 @@ export default function Header() {
             <div className="px-4 pt-2 pb-6 space-y-2">
               {navItems.map((item) => (
                 <a
-                  key={item.name}
+                  key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className="block px-3 py-3 rounded-lg text-base font-medium text-charcoal hover:bg-gold/10 hover:text-maroon transition-all duration-200"
@@ -118,7 +153,7 @@ export default function Header() {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-maroon hover:bg-maroon-light text-cream py-2.5 rounded-full font-medium text-sm transition-all duration-300 border border-gold/15"
                 >
-                  बोलती पुस्तके
+                  {t('nav.channel1')}
                 </a>
                 <a
                   href="https://www.youtube.com/@bolti_pustake?sub_confirmation=1"
@@ -127,7 +162,7 @@ export default function Header() {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-transparent hover:bg-gold/15 text-maroon hover:text-maroon-dark py-2.5 rounded-full font-medium text-sm transition-all duration-300 border border-maroon/30 hover:border-maroon"
                 >
-                  साहित्यरत्न चॅनेल
+                  {t('nav.channel2')}
                 </a>
               </div>
             </div>

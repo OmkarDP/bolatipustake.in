@@ -2,31 +2,34 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Mic, Heart, PenTool } from 'lucide-react';
 import VisitorCounter from './VisitorCounter';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Stats() {
+  const { t } = useLanguage();
+
   const stats = [
     {
-      num: '३००+',
-      label: 'मराठी कादंबऱ्यांचे अभिवाचन',
-      desc: 'प्रदीर्घ आणि सुप्रसिद्ध कादंबऱ्या श्रोत्यांसाठी ऑडिओ स्वरूपात.',
+      num: t('stats.stat1Num'),
+      label: t('stats.stat1Label'),
+      desc: t('stats.stat1Desc'),
       icon: <BookOpen className="w-8 h-8 text-gold" />
     },
     {
-      num: '५०००+',
-      label: 'कथांचे दर्जेदार वाचन',
-      desc: 'लघुकथा, सामाजिक कथा आणि ललित लेख यांचा समावेश.',
+      num: t('stats.stat2Num'),
+      label: t('stats.stat2Label'),
+      desc: t('stats.stat2Desc'),
       icon: <Mic className="w-8 h-8 text-gold" />
     },
     {
-      num: 'लाखो',
-      label: 'सदाबहार रसिक श्रोते',
-      desc: 'जगभरातील मराठी मनांना साहित्याशी जोडणारे अथांग व्यासपीठ.',
+      num: t('stats.stat3Num'),
+      label: t('stats.stat3Label'),
+      desc: t('stats.stat3Desc'),
       icon: <Heart className="w-8 h-8 text-gold" />
     },
     {
-      num: 'अनेक',
-      label: 'प्रतिष्ठित लेखक व प्रकाशक',
-      desc: 'अभिजात आणि ज्येष्ठ लेखकांपासून ते नवोदित साहित्यिकांपर्यंत.',
+      num: t('stats.stat4Num'),
+      label: t('stats.stat4Label'),
+      desc: t('stats.stat4Desc'),
       icon: <PenTool className="w-8 h-8 text-gold" />
     }
   ];
@@ -49,7 +52,7 @@ export default function Stats() {
                 {stat.icon}
               </div>
 
-              {/* Number in Devanagari */}
+              {/* Number */}
               <span className="font-serif text-4xl sm:text-5xl font-extrabold text-maroon block mb-2 tracking-tight">
                 {stat.num}
               </span>

@@ -1,38 +1,25 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Heart, Award, ArrowUpRight } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Journey() {
-  const steps = [
-    {
-      year: '२०२०',
-      title: 'चळवळीची सुरुवात (लॉकडाऊन)',
-      description: 'कोरोना टाळेबंदीच्या कठीण दिवसांमध्ये नैराश्यावर मात करण्यासाठी आणि मराठी साहित्याचा गोडवा घराघरांमध्ये पोहोचवण्यासाठी YouTube चॅनलची स्थापना करण्यात आली.',
-      icon: <Calendar className="w-5 h-5 text-cream" />,
-      color: 'bg-maroon'
-    },
-    {
-      year: '२०२१',
-      title: 'प्रेरणादायी वळण',
-      description: 'काही अशिक्षित आणि दृष्टिहीन बांधवांनी आवर्जून फोन करून अभिवाचनाचे कौतुक केले. “तुमच्या आवाजामुळे साहित्याचा खजिना खुला झाला” या शब्दांनी आम्हाला आमचे जीवनध्येय दिले.',
-      icon: <Heart className="w-5 h-5 text-cream" />,
-      color: 'bg-gold'
-    },
-    {
-      year: '२०२२ - २०२३',
-      title: 'सर्वसमावेशक विस्तार',
-      description: 'शेतकरी, गृहिणी, कार्यालयात जाणारे कर्मचारी, देशाचे रक्षण करणारे वीर जवान अशा सर्व थरांतील रसिक श्रोते जोडले गेले. ३०० पेक्षा अधिक कादंबऱ्यांचे अभिवाचन वाहिनीवर उपलब्ध झाले.',
-      icon: <Award className="w-5 h-5 text-cream" />,
-      color: 'bg-maroon'
-    },
-    {
-      year: '२०२४ - २०२६ (स्वप्न)',
-      title: 'स्वतंत्र ऑडिओबुक ॲप',
-      description: 'लेखक आणि प्रकाशकांच्या अधिकारांचा व रॉयल्टीचा सन्मान ठेवून, व्यावसायिक पातळीवर एक अद्ययावत मराठी ऑडिओबुक डिजिटल ॲप विकसित करण्याचा संकल्प.',
-      icon: <ArrowUpRight className="w-5 h-5 text-cream" />,
-      color: 'bg-gold'
-    }
+  const { t } = useLanguage();
+
+  const rawSteps = t('journey.steps') || [];
+  const icons = [
+    <Calendar className="w-5 h-5 text-cream" />,
+    <Heart className="w-5 h-5 text-cream" />,
+    <Award className="w-5 h-5 text-cream" />,
+    <ArrowUpRight className="w-5 h-5 text-cream" />
   ];
+  const colors = ['bg-maroon', 'bg-gold', 'bg-maroon', 'bg-gold'];
+
+  const steps = rawSteps.map((step, idx) => ({
+    ...step,
+    icon: icons[idx % icons.length],
+    color: colors[idx % colors.length]
+  }));
 
   return (
     <section id="journey" className="py-12 md:py-16 bg-cream-light relative overflow-hidden">
@@ -41,9 +28,9 @@ export default function Journey() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">कालक्रम</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('journey.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            आमचा प्रवास आणि ध्यास
+            {t('journey.title')}
           </h2>
           <div className="h-[2px] w-24 bg-gold mx-auto mt-2" />
         </div>

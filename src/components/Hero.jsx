@@ -1,8 +1,11 @@
 import React from 'react';
 import { ArrowDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section 
       id="home" 
@@ -24,7 +27,7 @@ export default function Hero() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-maroon/5 border border-maroon/10 text-maroon text-sm font-semibold tracking-wide font-serif"
             >
               <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-              बोलती पुस्तके
+              {t('hero.tag')}
             </motion.div>
 
             {/* Tagline */}
@@ -34,7 +37,7 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-gold-dark font-serif text-xl sm:text-2xl italic font-bold tracking-wide mt-2 block"
             >
-              "जेव्हा पुस्तके बोलू लागतात.."
+              {t('hero.tagline')}
             </motion.h2>
 
             {/* Main Headline */}
@@ -44,12 +47,12 @@ export default function Hero() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-maroon leading-tight"
             >
-              मराठी साहित्याचा <br className="hidden sm:inline" />
+              {t('hero.titlePart1')} <br className="hidden sm:inline" />
               <span className="text-charcoal-dark font-extrabold relative">
-                निनादणारा सूर
+                {t('hero.titleHighlight')}
                 <span className="absolute bottom-1 left-0 w-full h-[6px] bg-gold/30 -z-10 rounded" />
-              </span>, <br className="hidden sm:inline" />
-              आता प्रत्येक घरात...
+              </span>
+              {t('hero.titlePart2')}
             </motion.h1>
 
             {/* Description */}
@@ -59,7 +62,7 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-charcoal-light text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed font-sans"
             >
-              कथा आणि कादंबऱ्यांच्या ऑडिओबुकच्या माध्यमातून एक सोनेरी प्रवास. महाराष्ट्राचा समृद्ध आणि गौरवशाली साहित्यिक वारसा जपणारा प्रत्येक मराठी मनाचा हक्काचा डिजिटल कट्टा.
+              {t('hero.desc')}
             </motion.p>
 
             {/* Action Buttons */}
@@ -78,13 +81,13 @@ export default function Hero() {
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-500 fill-red-500 bg-white rounded-full p-0.5">
                   <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.518 3.545 12 3.545 12 3.545s-7.518 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.87.508 9.388.508 9.388.508s7.518 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
-                <span>युट्युबवर ऐका</span>
+                <span>{t('hero.ytBtn')}</span>
               </a>
               <a
                 href="#about"
                 className="bg-transparent hover:bg-gold/10 text-maroon hover:text-maroon-dark font-medium px-8 py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-300 border-2 border-maroon/20 hover:border-maroon"
               >
-                <span>आमच्याविषयी</span>
+                <span>{t('hero.aboutBtn')}</span>
                 <ArrowDown className="w-4 h-4 animate-bounce" />
               </a>
             </motion.div>
@@ -121,7 +124,7 @@ export default function Hero() {
                     <span className="w-[3px] bg-gold h-1 animate-[pulse_0.8s_infinite_0.4s]" />
                     <span className="w-[3px] bg-gold h-2.5 animate-[pulse_1.1s_infinite_0.1s]" />
                   </div>
-                  <span className="text-xs font-serif tracking-wider font-semibold">अभिवाचन सुरू आहे...</span>
+                  <span className="text-xs font-serif tracking-wider font-semibold">{t('hero.narrationStatus')}</span>
                 </div>
               </motion.div>
             </motion.div>

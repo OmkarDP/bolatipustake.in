@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Mail, Phone, Send, MessageCircle } from 'lucide-react';
+import { Mail, Send, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Contact() {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -57,12 +59,12 @@ export default function Contact() {
         
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">संपर्क</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('contact.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            आमच्याशी संपर्क साधा
+            {t('contact.title')}
           </h2>
           <p className="text-charcoal-light text-sm sm:text-base leading-relaxed">
-            तुमच्या काही शंका, अभिप्राय किंवा सहकार्यासाठी आम्हाला कधीही कळवा.
+            {t('contact.subtitle')}
           </p>
           <div className="h-[2px] w-24 bg-gold mx-auto mt-2" />
         </div>
@@ -72,7 +74,7 @@ export default function Contact() {
           {/* Left: Contact Info cards */}
           <div className="lg:col-span-5 space-y-6">
             <h3 className="font-serif text-2xl font-bold text-maroon mb-6">
-              संपर्क माहिती
+              {t('contact.infoTitle')}
             </h3>
 
             {/* Email */}
@@ -84,7 +86,7 @@ export default function Contact() {
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-serif font-bold text-charcoal-dark text-sm">ईमेल पत्ता</h4>
+                <h4 className="font-serif font-bold text-charcoal-dark text-sm">{t('contact.emailLabel')}</h4>
                 <p className="text-xs sm:text-sm text-charcoal-light font-sans mt-1">
                   mailtodashy@gmail.com
                 </p>
@@ -102,11 +104,11 @@ export default function Contact() {
                 <MessageCircle className="w-5 h-5 text-green-600 fill-green-100" />
               </div>
               <div>
-                <h4 className="font-serif font-bold text-charcoal-dark text-sm">फोन / व्हॉट्सॲप</h4>
+                <h4 className="font-serif font-bold text-charcoal-dark text-sm">{t('contact.phoneLabel')}</h4>
                 <p className="text-xs sm:text-sm text-charcoal-light font-sans mt-1 font-bold">
                   +९१ ९९६०१२०५२१
                 </p>
-                <span className="text-[10px] text-gold font-bold">थेट चर्चा करण्यासाठी क्लिक करा</span>
+                <span className="text-[10px] text-gold font-bold">{t('contact.clickToChat')}</span>
               </div>
             </a>
 
@@ -114,7 +116,7 @@ export default function Contact() {
             <div className="p-6 bg-maroon/5 rounded-2xl border border-maroon/10">
               <h4 className="font-serif font-bold text-maroon text-base">दशरथ पाटील</h4>
               <p className="text-xs text-charcoal-light italic font-serif">
-                अभिवाचक आणि संस्थापक | बोलती पुस्तके
+                {t('contact.founderRole')}
               </p>
             </div>
           </div>
@@ -123,7 +125,7 @@ export default function Contact() {
           <div className="lg:col-span-7 space-y-8">
             <div className="bg-cream-light p-6 sm:p-10 rounded-[2.5rem] border border-gold/15 shadow-md">
               <h3 className="font-serif text-2xl font-bold text-charcoal-dark mb-6">
-                संदेश पाठवा
+                {t('contact.formTitle')}
               </h3>
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -131,7 +133,7 @@ export default function Contact() {
                   {/* Name */}
                   <div className="space-y-2">
                     <label htmlFor="name" className="text-xs font-serif font-bold text-charcoal-dark">
-                      तुमचे नाव
+                      {t('contact.nameLabel')}
                     </label>
                     <input
                       type="text"
@@ -140,7 +142,7 @@ export default function Contact() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      placeholder="उदा. राहुल चव्हाण"
+                      placeholder={t('contact.namePlaceholder')}
                       className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-maroon transition-colors"
                     />
                   </div>
@@ -148,7 +150,7 @@ export default function Contact() {
                   {/* Phone */}
                   <div className="space-y-2">
                     <label htmlFor="phone" className="text-xs font-serif font-bold text-charcoal-dark">
-                      तुमचा फोन नंबर
+                      {t('contact.phoneInputLabel')}
                     </label>
                     <input
                       type="tel"
@@ -157,7 +159,7 @@ export default function Contact() {
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      placeholder="उदा. 9960120521"
+                      placeholder={t('contact.phonePlaceholder')}
                       className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-maroon transition-colors"
                     />
                   </div>
@@ -167,7 +169,7 @@ export default function Contact() {
                   {/* Email */}
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-xs font-serif font-bold text-charcoal-dark">
-                      तुमचा ईमेल
+                      {t('contact.emailInputLabel')}
                     </label>
                     <input
                       type="email"
@@ -176,7 +178,7 @@ export default function Contact() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      placeholder="उदा. rahul@example.com"
+                      placeholder={t('contact.emailPlaceholder')}
                       className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-maroon transition-colors"
                     />
                   </div>
@@ -184,7 +186,7 @@ export default function Contact() {
                   {/* Subject */}
                   <div className="space-y-2">
                     <label htmlFor="subject" className="text-xs font-serif font-bold text-charcoal-dark">
-                      विषय
+                      {t('contact.subjectLabel')}
                     </label>
                     <input
                       type="text"
@@ -193,7 +195,7 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleChange}
                       required
-                      placeholder="उदा. सहकार्याबद्दल / अभिप्राय"
+                      placeholder={t('contact.subjectPlaceholder')}
                       className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-maroon transition-colors"
                     />
                   </div>
@@ -202,7 +204,7 @@ export default function Contact() {
                 {/* Message */}
                 <div className="space-y-2">
                   <label htmlFor="message" className="text-xs font-serif font-bold text-charcoal-dark">
-                    तुमचा संदेश
+                    {t('contact.messageLabel')}
                   </label>
                   <textarea
                     id="message"
@@ -211,7 +213,7 @@ export default function Contact() {
                     value={formData.message}
                     onChange={handleChange}
                     required
-                    placeholder="तुमचा संदेश येथे लिहा..."
+                    placeholder={t('contact.messagePlaceholder')}
                     className="w-full bg-cream border border-gold/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-maroon transition-colors resize-none"
                   />
                 </div>
@@ -220,14 +222,14 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-maroon hover:bg-maroon-light disabled:bg-maroon/60 text-cream font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md border border-gold/15"
+                  className="w-full bg-maroon hover:bg-maroon-light disabled:bg-maroon/60 text-cream font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md border border-gold/15 cursor-pointer"
                 >
                   {loading ? (
-                    <span>पाठवत आहे...</span>
+                    <span>{t('contact.sending')}</span>
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      <span>संदेश पाठवा</span>
+                      <span>{t('contact.sendBtn')}</span>
                     </>
                   )}
                 </button>
@@ -238,7 +240,7 @@ export default function Contact() {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-3 bg-green-50 text-green-800 text-xs font-semibold text-center rounded-xl border border-green-200"
                   >
-                    धन्यवाद! तुमचा संदेश यशस्वीरीत्या पाठवला गेला आहे.
+                    {t('contact.successMsg')}
                   </motion.div>
                 )}
 
@@ -248,7 +250,7 @@ export default function Contact() {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-3 bg-red-50 text-red-800 text-xs font-semibold text-center rounded-xl border border-red-200"
                   >
-                    दिलगीर आहोत! संदेश पाठवताना अडचण आली. कृपया नंतर प्रयत्न करा किंवा ईमेल/व्हॉट्सॲप द्वारे संपर्क करा.
+                    {t('contact.errorMsg')}
                   </motion.div>
                 )}
               </form>

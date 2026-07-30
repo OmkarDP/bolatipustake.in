@@ -1,9 +1,11 @@
 import React from 'react';
 import { Mail, Phone } from 'lucide-react';
 import VisitorCounter from './VisitorCounter';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
 
   return (
     <footer className="bg-maroon-dark text-cream border-t-2 border-gold/40 pt-16 pb-8">
@@ -23,12 +25,12 @@ export default function Footer() {
                   बोलती पुस्तके
                 </span>
                 <span className="text-[10px] text-gold-light font-medium uppercase tracking-widest leading-none">
-                  मराठी साहित्याचा आवाज
+                  {t('nav.tagline')}
                 </span>
               </div>
             </a>
             <p className="text-cream/80 text-sm max-w-sm leading-relaxed font-sans">
-              'बोलती पुस्तके' ही केवळ एक ऑडिओबुक वाहिनी नसून, ती मराठी साहित्याची आवड जपणाऱ्या जगभरातील लाखो मराठी माणसांना एकत्र जोडणारा एक भावनिक व सांस्कृतिक सेतू आहे.
+              {t('footer.desc')}
             </p>
             <div className="flex items-center gap-4 pt-2">
               <a 
@@ -77,32 +79,32 @@ export default function Footer() {
           {/* Column 2: Navigation Links */}
           <div className="space-y-4">
             <h3 className="font-serif text-lg font-bold text-gold border-b border-gold/20 pb-2">
-              नेव्हिगेशन
+              {t('footer.navTitle')}
             </h3>
             <ul className="space-y-2 text-sm text-cream/80">
               <li>
                 <a href="#home" className="hover:text-gold transition-colors duration-200">
-                  मुख्यपृष्ठ
+                  {t('nav.home')}
                 </a>
               </li>
               <li>
                 <a href="#about" className="hover:text-gold transition-colors duration-200">
-                  आमच्याविषयी
+                  {t('nav.about')}
                 </a>
               </li>
               <li>
                 <a href="#journey" className="hover:text-gold transition-colors duration-200">
-                  आमचा प्रवास
+                  {t('nav.journey')}
                 </a>
               </li>
               <li>
                 <a href="#literature" className="hover:text-gold transition-colors duration-200">
-                  साहित्य संग्रह
+                  {t('nav.literature')}
                 </a>
               </li>
               <li>
                 <a href="#sitemap" className="hover:text-gold transition-colors duration-200">
-                  साईटमॅप (Sitemap)
+                  {t('nav.sitemap')}
                 </a>
               </li>
             </ul>
@@ -111,22 +113,22 @@ export default function Footer() {
           {/* Column 3: Legal Policy */}
           <div className="space-y-4">
             <h3 className="font-serif text-lg font-bold text-gold border-b border-gold/20 pb-2">
-              धोरण आणि नियम
+              {t('footer.policyTitle')}
             </h3>
             <ul className="space-y-2 text-sm text-cream/80">
               <li>
                 <a href="#privacy" className="hover:text-gold transition-colors duration-200">
-                  गोपनीयता धोरण (Privacy Policy)
+                  {t('footer.privacyPolicy')}
                 </a>
               </li>
               <li>
                 <a href="#terms" className="hover:text-gold transition-colors duration-200">
-                  नियम आणि शर्ती (Terms & Conditions)
+                  {t('footer.terms')}
                 </a>
               </li>
               <li>
                 <a href="#contact" className="hover:text-gold transition-colors duration-200">
-                  संपर्क साधा
+                  {t('nav.contact')}
                 </a>
               </li>
             </ul>
@@ -137,13 +139,13 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-cream/60 text-center gap-6">
           <p className="order-2 md:order-1">
-            &copy; {currentYear} Bolati Pustake (बोलती पुस्तके | bolatipustake.in). सर्व हक्क राखीव.
+            &copy; {currentYear} Bolati Pustake (बोलती पुस्तके | bolatipustake.in). {t('footer.rights')}
           </p>
           <div className="order-1 md:order-2 my-2 md:my-0">
             <VisitorCounter variant="compact" />
           </div>
           <p className="font-serif italic text-gold-light order-3">
-            अभिवाचक: दशरथ पाटील | बोलती पुस्तके YouTube चळवळ
+            {t('footer.founderFooter')}
           </p>
         </div>
       </div>

@@ -1,47 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, CheckCircle, Quote, Headphones } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Literature() {
-  const primaryWorks = [
-    {
-      title: 'उचल्या',
-      author: 'लक्ष्मण गायकवाड',
-      category: 'आत्मचरित्र',
-      desc: 'उपेक्षित, भटक्या आणि विमुक्त समाजाचे जळजळीत सामाजिक वास्तव मांडणारे आणि त्यांच्या वेदनेला वाचा फोडणारे एक अत्यंत प्रभावी, पुरस्कारप्राप्त आत्मचरित्र.',
-      tag: 'अस्सल समाजचित्रण',
-      link: 'https://youtube.com/playlist?list=PL0tGux3TCZnZbmMlL2fvGeLxN4fWQaVI1&si=PQL-nSUhyCr9vyCz'
-    },
-    {
-      title: 'आक्करमाशी',
-      author: 'शरणकुमार लिंबाळे',
-      category: 'आत्मचरित्र',
-      desc: 'दलित साहित्यातील एक महत्त्वाचा मैलाचा दगड. तीव्र सामाजिक जाणिवा, तीव्र मानवी संघर्ष आणि अस्तित्वाची लढाई मांडणारी दिशादर्शक गाथा.',
-      tag: 'संघर्षाची धारदार गाथा',
-      link: 'https://youtube.com/playlist?list=PL0tGux3TCZnZpVYYJxivT8gaOj1lUkKTf&si=JmPaqf2DgV3RaHxd'
-    },
-    {
-      title: 'आयदान',
-      author: 'उर्मिला पवार',
-      category: 'आत्मचरित्र',
-      desc: 'दलित स्त्रीचे भावविश्व, तिची सहनशीलता आणि पुरुषप्रधान व जातिप्रधान व्यवस्थेविरुद्ध तिने दिलेला लढा रेखाटणारा एक संवेदनशील जीवनप्रवास.',
-      tag: 'स्त्री जाणिवांचा प्रवास',
-      link: 'https://youtube.com/playlist?list=PL0tGux3TCZnZIY1ZmlS3fVR6hjQfrzd4Q&si=oV4rOAT6yisUmu3y'
-    }
+  const { t } = useLanguage();
+
+  const primaryWorksTranslated = t('literature.primaryWorks') || [];
+  const authorsTranslated = t('literature.authors') || [];
+
+  const links = [
+    'https://youtube.com/playlist?list=PL0tGux3TCZnZbmMlL2fvGeLxN4fWQaVI1&si=PQL-nSUhyCr9vyCz',
+    'https://youtube.com/playlist?list=PL0tGux3TCZnZpVYYJxivT8gaOj1lUkKTf&si=JmPaqf2DgV3RaHxd',
+    'https://youtube.com/playlist?list=PL0tGux3TCZnZIY1ZmlS3fVR6hjQfrzd4Q&si=oV4rOAT6yisUmu3y'
   ];
 
-  const authors = [
-    {
-      name: 'जयवंत दळवी',
-      role: 'अजरामर कादंबरीकार व नाटककार',
-      desc: 'मानवी स्वभाव, नात्यांमधील गुंतागुंत आणि सामाजिक व्यंगांवर उपरोधिक शैलीत लिहिणारे मराठीतील दिग्गज साहित्यिक.'
-    },
-    {
-      name: 'ह. मो. मराठे',
-      role: 'प्रतिभावंत लेखक व ज्येष्ठ संपादक',
-      desc: 'मराठी कथा आणि कादंबरी विश्वात स्वतःची वेगळी शैली निर्माण करणारे, वाचकांच्या मनावर अधिराज्य गाजवणारे लेखक.'
-    }
-  ];
+  const primaryWorks = primaryWorksTranslated.map((work, idx) => ({
+    ...work,
+    link: links[idx % links.length]
+  }));
 
   return (
     <section id="literature" className="py-12 md:py-16 bg-cream-light relative">
@@ -51,12 +28,12 @@ export default function Literature() {
         
         {/* Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <span className="text-gold font-serif italic text-lg font-medium block">साहित्य संग्रह</span>
+          <span className="text-gold font-serif italic text-lg font-medium block">{t('literature.tag')}</span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-maroon">
-            आमचे प्रमुख साहित्य आणि लेखक
+            {t('literature.title')}
           </h2>
           <p className="text-charcoal-light text-sm sm:text-base leading-relaxed">
-            महाराष्ट्राचे विचारविश्व समृद्ध करणाऱ्या काही सुप्रसिद्ध आत्मकथा आणि ज्येष्ठ कथाकारांचे साहित्य
+            {t('literature.subtitle')}
           </p>
           <div className="h-[2px] w-24 bg-gold mx-auto mt-2" />
         </div>
@@ -93,7 +70,7 @@ export default function Literature() {
                       {work.title}
                     </h3>
                     <p className="text-sm font-sans font-bold text-gold-dark mt-0.5">
-                      लेखक: {work.author}
+                      {t('literature.byAuthor')} {work.author}
                     </p>
                   </div>
                 </div>
@@ -108,7 +85,7 @@ export default function Literature() {
               <div className="bg-cream-dark/20 border-t border-gold/10 px-6 sm:px-8 py-4 flex justify-between items-center text-xs">
                 <span className="text-charcoal-light flex items-center gap-1.5">
                   <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-                  पूर्ण अभिवाचन उपलब्ध
+                  {t('literature.fullAvailable')}
                 </span>
                 <a 
                   href={work.link}  
@@ -117,7 +94,7 @@ export default function Literature() {
                   className="text-maroon hover:text-maroon-dark font-serif font-bold text-sm sm:text-base flex items-center gap-1.5 transition-colors duration-200"
                 >
                   <Headphones className="w-4 h-4 shrink-0 text-maroon" />
-                  <span>ऐका</span>
+                  <span>{t('literature.listen')}</span>
                 </a>
               </div>
             </motion.div>
@@ -128,15 +105,15 @@ export default function Literature() {
         <div className="bg-cream p-6 sm:p-12 rounded-[2.5rem] border border-gold/20 shadow-md">
           <div className="max-w-2xl mb-10">
             <h3 className="font-serif text-2xl font-bold text-maroon mb-2">
-              ज्येष्ठ व अभिजात साहित्यिक
+              {t('literature.authorsTitle')}
             </h3>
             <p className="text-charcoal-light text-sm">
-              आमच्या वाहिनीवर इतर अनेक दिग्गज लेखकांचे दर्जेदार साहित्य ऐकायला मिळेल:
+              {t('literature.authorsSubtitle')}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {authors.map((author, index) => (
+            {authorsTranslated.map((author, index) => (
               <motion.div
                 key={author.name}
                 initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}

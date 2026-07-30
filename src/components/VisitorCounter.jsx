@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, animate } from 'framer-motion';
 import { Users } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function VisitorCounter({ variant = 'default' }) {
   const [displayCount, setDisplayCount] = useState(0);
   const [activeReaders, setActiveReaders] = useState(12);
+  const { lang, t } = useLanguage();
 
   // Initialize and get visitor count
   useEffect(() => {
@@ -62,8 +64,8 @@ export default function VisitorCounter({ variant = 'default' }) {
     };
   }, []);
 
-  // Format integer to Indian style commas (e.g. 2,87,419) and translate to Devanagari digits
-  const formatMarathiNumber = (num) => {
+  // Format integer to Indian style commas (e.g. 2,87,419) and optional Devanagari digits for Marathi
+  const formatNumber = (num) => {
     const str = num.toString();
     let lastThree = str.substring(str.length - 3);
     const otherBits = str.substring(0, str.length - 3);
@@ -71,6 +73,8 @@ export default function VisitorCounter({ variant = 'default' }) {
       lastThree = ',' + lastThree;
     }
     const formatted = otherBits.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+
+    if (lang === 'en') return formatted;
 
     const devanagariDigits = {
       '0': '०', '1': '१', '2': '२', '3': '३', '4': '४',
@@ -81,8 +85,8 @@ export default function VisitorCounter({ variant = 'default' }) {
     return formatted.split('').map(char => devanagariDigits[char] || char).join('');
   };
 
-  const formattedMarathi = formatMarathiNumber(displayCount);
-  const formattedActiveMarathi = formatMarathiNumber(activeReaders);
+  const formattedCount = formatNumber(displayCount);
+  const formattedActive = formatNumber(activeReaders);
 
   // Variant 1: Compact/Footer badge (glassmorphic capsule design)
   if (variant === 'compact') {
@@ -94,11 +98,11 @@ export default function VisitorCounter({ variant = 'default' }) {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </div>
           <span className="text-[11px] font-sans tracking-wide">
-            रसिक श्रोते भेट: <strong className="font-serif text-gold-light text-sm font-semibold ml-1">{formattedMarathi}</strong>
+            {t('visitorCounter.badgeText')} <strong className="font-serif text-gold-light text-sm font-semibold ml-1">{formattedCount}</strong>
           </span>
         </div>
         <p className="text-[9px] text-cream/40 italic">
-          सध्या {formattedActiveMarathi} रसिक ऑनलाईन ऐकत आहेत
+          {t('visitorCounter.activeText').replace('{count}', formattedActive)}
         </p>
       </div>
     );
@@ -122,7 +126,7 @@ export default function VisitorCounter({ variant = 'default' }) {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
         </span>
-        <span className="text-[9px] font-medium text-emerald-700 uppercase tracking-wider">थेट कार्यरत</span>
+        <span className="text-[9px] font-medium text-emerald-700 uppercase tracking-wider">{t('visitorCounter.liveBadge')}</span>
       </div>
 
       {/* Icon container */}
@@ -130,24 +134,24 @@ export default function VisitorCounter({ variant = 'default' }) {
         <Users className="w-8 h-8 text-gold-light" />
       </div>
 
-      {/* Number with custom letterspacing & Devanagari styling */}
+      {/* Number with custom letterspacing & Devanagari/English styling */}
       <div className="mb-2">
         <span className="font-serif text-4xl sm:text-5xl font-extrabold text-maroon block tracking-tight">
-          {formattedMarathi}
+          {formattedCount}
         </span>
       </div>
 
       {/* Label and description */}
       <h3 className="font-serif text-lg font-bold text-charcoal-dark mb-1.5">
-        एकूण डिजिटल भेट देणारे
+        {t('visitorCounter.cardTitle')}
       </h3>
       <p className="text-xs sm:text-sm text-charcoal-light leading-relaxed mb-3">
-        बोलती पुस्तके चळवळीला भेट देऊन साहित्याचा आनंद घेणारे रसिक श्रोते.
+        {t('visitorCounter.cardDesc')}
       </p>
 
       {/* Sub-stat showing active readers */}
       <div className="text-[11px] text-maroon bg-maroon/5 border border-maroon/10 rounded-lg py-1 px-3 mt-1 font-sans">
-        सध्या <span className="font-serif font-bold text-maroon-light">{formattedActiveMarathi}</span> रसिक संकेतस्थळावर उपस्थित आहेत
+        {t('visitorCounter.activeBadge').replace('{count}', formattedActive)}
       </div>
     </motion.div>
   );
