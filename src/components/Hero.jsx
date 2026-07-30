@@ -109,7 +109,7 @@ export default function Hero() {
               >
                 <img
                   src="/hero_illustration.png"
-                  alt="बोलती पुस्तके ऑडिओबुक्स"
+                  alt="Bolati Pustake (बोलती पुस्तके) Marathi Audiobooks Illustration"
                   className="w-full h-auto rounded-[1.8rem] border border-gold/20 object-cover aspect-[4/5]"
                 />
                 

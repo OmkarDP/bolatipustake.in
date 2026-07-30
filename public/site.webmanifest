@@ -1,0 +1,23 @@
+{
+  "name": "Bolati Pustake - बोलती पुस्तके",
+  "short_name": "Bolati Pustake",
+  "description": "मराठी साहित्याचा निनादणारा आवाज - ३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fcf9f2",
+  "theme_color": "#6b1d2f",
+  "icons": [
+    {
+      "src": "/logo-preview.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-preview.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -25,6 +25,7 @@ export default function Header() {
     { name: 'साहित्य संग्रह', href: '#literature' },
     { name: 'आमचे ध्येय', href: '#mission' },
     { name: 'संपर्क', href: '#contact' },
+    { name: 'साईटमॅप', href: '#sitemap' },
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -43,7 +44,7 @@ export default function Header() {
           <a href="#home" className="flex items-center gap-2 group">
             <img 
               src="/logo.png" 
-              alt="बोलती पुस्तके लोगो" 
+              alt="Bolati Pustake - बोलती पुस्तके Logo" 
               className="w-10 h-10 object-contain rounded-xl shadow-sm border border-gold/10 group-hover:border-gold/30 transition-all duration-300 bg-cream p-0.5" 
             />
             <div className="flex flex-col">

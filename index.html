@@ -2,25 +2,45 @@
 <html lang="mr" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/png" href="/logo-preview.png" />
+    <link rel="apple-touch-icon" href="/logo-preview.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- SEO Meta Tags -->
-    <title>बोलती पुस्तके | मराठी साहित्याचा निनादणारा आवाज, ऑडिओबुक्स चळवळ</title>
-    <meta name="description" content="बोलती पुस्तके - मराठी साहित्याचा आवाज, प्रत्येक घरापर्यंत. ३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन. कोरोना काळात सुरू झालेली एक भावनिक आणि सांस्कृतिक चळवळ." />
-    <meta name="keywords" content="बोलती पुस्तके, मराठी ऑडिओबुक्स, मराठी कादंबऱ्या, मराठी कथा, अभिवाचन, लक्ष्मण गायकवाड, शरणकुमार लिंबाळे, उर्मिला पवार, दशरथ पाटील, Marathi Audiobooks, Marathi Literature" />
-    <meta name="author" content="दशरथ पाटील" />
+    <!-- Primary SEO Meta Tags -->
+    <title>Bolati Pustake | बोलती पुस्तके | Marathi Audiobooks & Literature Movement</title>
+    <meta name="title" content="Bolati Pustake | बोलती पुस्तके | Marathi Audiobooks & Literature Movement" />
+    <meta name="description" content="Bolati Pustake (बोलती पुस्तके) - मराठी साहित्याचा आवाज, प्रत्येक घरापर्यंत. ३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन. कोरोना काळात सुरू झालेली भावनिक आणि सांस्कृतिक चळवळ. Listen to Marathi audiobooks & literature online." />
+    <meta name="keywords" content="bolati pustake, बोलती पुस्तके, bolati pustake marathi, bolati pustake audiobook, marathi audiobooks, marathi kadambari audio, marathi katha abhivachan, dashrath patil bolati pustake, bolatipustake.in, bolati pustake youtube, मराठी साहित्याचा आवाज, अभिवाचन, लक्ष्मण गायकवाड, शरणकुमार लिंबाळे, उर्मिला पवार" />
+    <meta name="author" content="दशरथ पाटील (Dashrath Patil) - बोलती पुस्तके" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="canonical" href="https://bolatipustake.in/" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Geo & Language Metadata -->
+    <meta name="geo.region" content="IN-MH" />
+    <meta name="geo.placename" content="Maharashtra, India" />
+    <meta name="language" content="Marathi, English" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="बोलती पुस्तके | मराठी साहित्याचा निनादणारा आवाज" />
+    <meta property="og:site_name" content="Bolati Pustake (बोलती पुस्तके)" />
+    <meta property="og:url" content="https://bolatipustake.in/" />
+    <meta property="og:title" content="Bolati Pustake | बोलती पुस्तके | मराठी साहित्याचा निनादणारा आवाज" />
     <meta property="og:description" content="३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन. महाराष्ट्राचा समृद्ध सांस्कृतिक वारसा जपणारा हक्काचा डिजिटल कट्टा." />
-    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:image" content="https://bolatipustake.in/og-image.png" />
+    <meta property="og:image:secure_url" content="https://bolatipustake.in/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Bolati Pustake - बोलती पुस्तके Marathi Audiobooks" />
 
-    <!-- Twitter -->
+    <!-- Twitter Card -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content="बोलती पुस्तके | मराठी साहित्याचा निनादणारा आवाज" />
+    <meta property="twitter:url" content="https://bolatipustake.in/" />
+    <meta property="twitter:title" content="Bolati Pustake | बोलती पुस्तके | मराठी साहित्याचा निनादणारा आवाज" />
     <meta property="twitter:description" content="३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन. महाराष्ट्राचा समृद्ध सांस्कृतिक वारसा जपणारा हक्काचा डिजिटल कट्टा." />
+    <meta property="twitter:image" content="https://bolatipustake.in/og-image.png" />
 
     <!-- Google Fonts for Marathi Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,9 +49,86 @@
     
     <!-- Lottie Web Component Player -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" defer></script>
+
+    <!-- Schema.org JSON-LD Structured Data for Google Search Ranking -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://bolatipustake.in/#website",
+          "url": "https://bolatipustake.in/",
+          "name": "Bolati Pustake",
+          "alternateName": ["बोलती पुस्तके", "BolatiPustake", "Bolati Pustake Audiobooks"],
+          "description": "मराठी साहित्याचा निनादणारा आवाज - ३००+ कादंबऱ्या आणि ५०००+ कथांचे दर्जेदार अभिवाचन.",
+          "inLanguage": "mr-IN"
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://bolatipustake.in/#organization",
+          "name": "Bolati Pustake",
+          "alternateName": "बोलती पुस्तके चळवळ",
+          "url": "https://bolatipustake.in/",
+          "logo": "https://bolatipustake.in/logo.png",
+          "founder": {
+            "@type": "Person",
+            "name": "Dashrath Patil",
+            "alternateName": "दशरथ पाटील"
+          },
+          "sameAs": [
+            "https://www.youtube.com/@bolati_pustake"
+          ]
+        },
+        {
+          "@type": "CreativeWorkSeries",
+          "@id": "https://bolatipustake.in/#series",
+          "name": "Bolati Pustake Marathi Audiobooks Collection",
+          "alternateName": "बोलती पुस्तके ऑडिओबुक संग्रह",
+          "author": {
+            "@type": "Organization",
+            "name": "Bolati Pustake"
+          },
+          "genre": ["Marathi Literature", "Audiobooks", "Culture", "Storytelling"],
+          "inLanguage": "mr"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://bolatipustake.in/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "बोलती पुस्तके (Bolati Pustake) म्हणजे काय?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "बोलती पुस्तके ही मराठी साहित्याचा प्रसार करण्यासाठी आणि दृष्टिहीन तसेच साहित्यप्रेमी बांधवांसाठी दर्जेदार ऑडिओबुक्स व कथांचे अभिवाचन पुरवणारी एक प्रमुख सांस्कृतिक व भावनिक चळवळ आहे."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "बोलती पुस्तके वर कोणती पुस्तके उपलब्ध आहेत?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "बोलती पुस्तके युट्युब चॅनेल आणि डिजिटल प्लॅटफॉर्मवर ३००+ हून अधिक प्रसिद्ध मराठी कादंबऱ्या आणि ५०००+ हून अधिक लघुकथांचे सुश्राव्य अभिवाचन उपलब्ध आहे."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "बोलती पुस्तके चळवळीचे संस्थापक कोण आहेत?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "बोलती पुस्तके या उपक्रमाची सुरुवात कोरोना काळातील टाळेबंदीदरम्यान ज्येष्ठ अभिवाचक श्री. दशरथ पाटील यांच्या कल्पकतेतून व पुढाकारातून झाली."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body class="bg-cream text-charcoal font-sans antialiased overflow-x-hidden selection:bg-maroon selection:text-cream">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script data-goatcounter="https://bolatipustake.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   </body>
 </html>

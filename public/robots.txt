@@ -1,0 +1,9 @@
+# Robots.txt for Bolati Pustake (bolatipustake.in)
+User-agent: *
+Allow: /
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemap URL for Google / Bing / Search Engines
+Sitemap: https://bolatipustake.in/sitemap.xml

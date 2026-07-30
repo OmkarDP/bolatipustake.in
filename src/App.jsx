@@ -9,6 +9,7 @@ import WhyUs from './components/WhyUs';
 import Literature from './components/Literature';
 import SupportCTA from './components/SupportCTA';
 import Contact from './components/Contact';
+import Sitemap from './components/Sitemap';
 import Footer from './components/Footer';
 
 function App() {
@@ -45,6 +46,9 @@ function App() {
         
         {/* Contact Form, Info, and Embedded Google Map */}
         <Contact />
+        
+        {/* Website Structure & Interactive Sitemap */}
+        <Sitemap />
       </main>
       
       {/* Footer Branding and Legal Policies Links */}

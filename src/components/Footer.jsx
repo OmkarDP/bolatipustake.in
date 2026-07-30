@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone } from 'lucide-react';
+import VisitorCounter from './VisitorCounter';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -99,6 +100,11 @@ export default function Footer() {
                   साहित्य संग्रह
                 </a>
               </li>
+              <li>
+                <a href="#sitemap" className="hover:text-gold transition-colors duration-200">
+                  साईटमॅप (Sitemap)
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -129,11 +135,14 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-cream/60 text-center gap-4">
-          <p>
-            &copy; {currentYear} बोलती पुस्तके. सर्व हक्क राखीव.
+        <div className="border-t border-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-cream/60 text-center gap-6">
+          <p className="order-2 md:order-1">
+            &copy; {currentYear} Bolati Pustake (बोलती पुस्तके | bolatipustake.in). सर्व हक्क राखीव.
           </p>
-          <p className="font-serif italic text-gold-light">
+          <div className="order-1 md:order-2 my-2 md:my-0">
+            <VisitorCounter variant="compact" />
+          </div>
+          <p className="font-serif italic text-gold-light order-3">
             अभिवाचक: दशरथ पाटील | बोलती पुस्तके YouTube चळवळ
           </p>
         </div>
