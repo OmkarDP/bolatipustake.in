@@ -1,87 +1,119 @@
-# ──────────────────────────────────────────────────────────────────────────────
-# Deploy workflow — BolatiPustake.in (Vite + React 19)
+﻿# ──────────────────────────────────────────────────────────────────────────────
+# Deploy workflow — BolatiPustake.in  (Vite 8 + React 19)
 #
 # Deploys the production build to AWS S3 and invalidates CloudFront.
 # Authentication uses GitHub OIDC — NO long-lived AWS credentials are stored.
 #
-# Required GitHub repository variables  (Settings → Secrets and variables → Variables):
-#   AWS_REGION                  e.g.  ap-south-1
-#   S3_BUCKET                   e.g.  bolatipustake-in-prod
-#   CLOUDFRONT_DISTRIBUTION_ID  e.g.  EXXXXXXXXXXXX
+# ┌─ Required GitHub repository Variables ────────────────────────────────────┐
+# │  (Settings → Secrets and variables → Variables)                           │
+# │  AWS_REGION                  e.g.  ap-south-1                             │
+# │  AWS_ACCOUNT_ID              e.g.  508375325181  ← guards wrong-account   │
+# │  S3_BUCKET                   e.g.  bolatipustake-in-prod                  │
+# │  CLOUDFRONT_DISTRIBUTION_ID  e.g.  EXXXXXXXXXXXX                          │
+# └───────────────────────────────────────────────────────────────────────────┘
 #
-# Required GitHub repository secrets (Settings → Secrets and variables → Secrets):
-#   AWS_ROLE_ARN                e.g.  arn:aws:iam::123456789012:role/github-actions-deploy
+# ┌─ Required GitHub repository Secrets ──────────────────────────────────────┐
+# │  (Settings → Secrets and variables → Secrets)                             │
+# │  AWS_ROLE_ARN  e.g.  arn:aws:iam::508375325181:role/OIDC-bolatipustake.in │
+# └───────────────────────────────────────────────────────────────────────────┘
 #
-# AWS trust-policy prerequisite (one-time setup):
-#   The IAM role must trust the GitHub OIDC provider and scope the sub claim to:
-#     token.actions.githubusercontent.com
-#   with condition:
-#     "sub": "repo:<org>/<repo>:ref:refs/heads/main"
+# ┌─ IAM Trust Policy prerequisite (one-time setup) ──────────────────────────┐
+# │  Principal: Federated: arn:aws:iam::<account>:oidc-provider/              │
+# │                        token.actions.githubusercontent.com                 │
+# │  Condition StringEquals:                                                   │
+# │    token.actions.githubusercontent.com:aud  → sts.amazonaws.com            │
+# │    token.actions.githubusercontent.com:sub  →                              │
+# │      repo:OmkarDP/bolatipustake.in:ref:refs/heads/main                    │
+# │                                                                            │
+# │  ⚠ Use StringEquals (not StringLike) for maximum scope restriction.        │
+# │    StringLike with wildcards allows unintended repos/branches to assume    │
+# │    this role. Update the IAM trust policy if currently using StringLike.   │
+# └───────────────────────────────────────────────────────────────────────────┘
 # ──────────────────────────────────────────────────────────────────────────────
 
-name: Deploy to AWS S3 + CloudFront
+name: "Deploy — BolatiPustake.in"
 
 # ── Triggers ──────────────────────────────────────────────────────────────────
 on:
   push:
     branches:
-      - main          # Run on every push to main (production branch)
-  workflow_dispatch:  # Allow manual runs from the GitHub Actions UI
+      - main                  # Production branch only
+  workflow_dispatch:          # Allow manual deploys from the GitHub Actions UI
 
 # ── Concurrency ───────────────────────────────────────────────────────────────
-# Prevent multiple simultaneous deployments for the same branch.
-# A new run cancels any in-progress run for the same concurrency group.
+# One deployment per branch at a time.
+# A newer push cancels any in-progress run — prevents two deploys from racing
+# and leaving S3 in an inconsistent state.
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: "deploy-${{ github.ref }}"
   cancel-in-progress: true
 
-# ── Global permissions (principle of least privilege) ─────────────────────────
-# contents:read  — needed by actions/checkout to clone the repository
-# id-token:write — needed by aws-actions/configure-aws-credentials to request
-#                  a short-lived OIDC token from GitHub and exchange it for
-#                  temporary AWS credentials (replaces long-lived access keys)
+# ── Workflow-level permissions (principle of least privilege) ─────────────────
+# Deny everything by default; grant only what is strictly required.
+#   contents:read  — actions/checkout needs to clone the repo
+#   id-token:write — configure-aws-credentials needs to mint an OIDC JWT
+# All other scopes (packages, pull-requests, issues, …) are implicitly denied.
 permissions:
   contents: read
   id-token: write
 
-# ── Environment variables shared across all steps ─────────────────────────────
+# ── Workflow-level environment variables ──────────────────────────────────────
 env:
-  # Vite's default build output directory (no custom outDir in vite.config.js)
-  BUILD_DIR: dist
-  # Node.js version — no .nvmrc or engines field found; defaulting to LTS 22
-  NODE_VERSION: "22"
+  BUILD_DIR:              dist    # Vite default; update if build.outDir changes
+  NODE_VERSION:           "22"   # LTS. Bump intentionally when upgrading Node.
+  AWS_CLI_TIMEOUT_SECONDS: "60"  # Hard cap per AWS CLI call; prevents hung jobs
+  MAX_BUILD_SIZE_KB:       "5000" # Alert if bundle grows beyond this threshold
 
 jobs:
   deploy:
-    name: Build & Deploy
+    name: "Build & Deploy"
     runs-on: ubuntu-latest
 
-    # Cap total job runtime. Prevents runaway jobs from consuming minutes.
+    # Hard cap on total job runtime. A typical build+deploy takes ~3 minutes;
+    # 15 minutes provides headroom while preventing runaway billing.
     timeout-minutes: 15
 
+    # Linking to a named environment enables:
+    #   • Environment-scoped secrets/variables
+    #   • Required reviewers / protection rules
+    #   • Deployment history + status on the GitHub UI
+    environment:
+      name: production
+      url: "https://bolatipustake.in"
+
     steps:
-      # ── 1. Validate required configuration ──────────────────────────────────
-      # Fail fast with a human-readable error before wasting build time if any
-      # required repository variable or secret is not configured.
-      - name: Validate required secrets and variables
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 1 — PRE-FLIGHT CHECKS
+      # Fail fast before spending CI minutes on avoidable mistakes.
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 1: Validate all required config ─────────────────────────────────
+      # Surface every missing value up front in one pass rather than letting a
+      # missing variable produce a cryptic error deep in the workflow.
+      # Secrets are shadowed under env vars so they never expand inline into the
+      # run: script text (prevents accidental log exposure).
+      - name: "Pre-flight: validate required secrets and variables"
         shell: bash
         env:
           _AWS_REGION:                 ${{ vars.AWS_REGION }}
+          _AWS_ACCOUNT_ID:             ${{ vars.AWS_ACCOUNT_ID }}
           _S3_BUCKET:                  ${{ vars.S3_BUCKET }}
           _CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
           _AWS_ROLE_ARN:               ${{ secrets.AWS_ROLE_ARN }}
         run: |
-          MISSING=()
+          set -euo pipefail
 
-          [[ -z "$_AWS_REGION" ]]                 && MISSING+=("vars.AWS_REGION")
-          [[ -z "$_S3_BUCKET" ]]                  && MISSING+=("vars.S3_BUCKET")
-          [[ -z "$_CLOUDFRONT_DISTRIBUTION_ID" ]] && MISSING+=("vars.CLOUDFRONT_DISTRIBUTION_ID")
-          [[ -z "$_AWS_ROLE_ARN" ]]               && MISSING+=("secrets.AWS_ROLE_ARN")
+          MISSING=()
+          [[ -z "${_AWS_REGION}"                 ]] && MISSING+=("vars.AWS_REGION")
+          [[ -z "${_AWS_ACCOUNT_ID}"             ]] && MISSING+=("vars.AWS_ACCOUNT_ID")
+          [[ -z "${_S3_BUCKET}"                  ]] && MISSING+=("vars.S3_BUCKET")
+          [[ -z "${_CLOUDFRONT_DISTRIBUTION_ID}" ]] && MISSING+=("vars.CLOUDFRONT_DISTRIBUTION_ID")
+          [[ -z "${_AWS_ROLE_ARN}"               ]] && MISSING+=("secrets.AWS_ROLE_ARN")
 
           if [[ ${#MISSING[@]} -gt 0 ]]; then
-            echo "❌ Deployment aborted — the following repository configuration is missing:"
+            echo "❌ Deployment aborted — missing repository configuration:"
             for item in "${MISSING[@]}"; do
-              echo "   • $item"
+              echo "   • ${item}"
             done
             echo ""
             echo "Add these under: Settings → Secrets and variables → Actions"
@@ -90,261 +122,411 @@ jobs:
 
           echo "✅ All required secrets and variables are present."
 
-      # ── 2. Checkout source code ──────────────────────────────────────────────
-      # actions/checkout@v4 clones the repository at the triggering commit.
-      # fetch-depth: 1 (shallow clone) is the default and keeps the checkout fast.
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # ── Step 2: Enforce main-only deployment ─────────────────────────────────
+      # workflow_dispatch lets any branch be selected manually — this guard
+      # ensures only 'main' ever reaches AWS regardless of who clicks the button.
+      - name: "Pre-flight: enforce main-only deployment"
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      # ── 3. Set up Node.js with dependency caching ────────────────────────────
-      # actions/setup-node@v4 installs the specified Node version.
-      # cache: 'npm' automatically caches ~/.npm keyed on package-lock.json,
-      # dramatically speeding up subsequent runs when dependencies haven't changed.
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            echo "❌ Deployment blocked."
+            echo "   This workflow only deploys from branch 'main'."
+            echo "   Triggered by: ${{ github.ref_name }}"
+            echo ""
+            echo "   If you need to deploy from another branch, update the"
+            echo "   'branches' trigger and IAM trust policy sub condition."
+            exit 1
+          fi
+
+          echo "✅ Branch check passed — deploying from: ${{ github.ref_name }}"
+
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 2 — BUILD
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 3: Checkout source ───────────────────────────────────────────────
+      # Pinned to commit SHA (not just a tag) to prevent tag-moving supply-chain
+      # attacks. Shallow clone (depth: 1) keeps checkout fast.
+      # persist-credentials: false drops the ephemeral GitHub token from git
+      # config so downstream steps cannot accidentally push.
+      - name: "Checkout repository"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # ── Step 4: Set up Node.js with dependency caching ───────────────────────
+      # cache: 'npm' writes ~/.npm to the Actions cache keyed on
+      # package-lock.json hash — subsequent runs with the same lock file skip
+      # the npm registry entirely, saving ~30–60 s on warm runs.
+      - name: "Set up Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
-      # ── 4. Install dependencies (clean install) ───────────────────────────────
-      # `npm ci` installs exactly what is in package-lock.json, refuses to mutate
-      # it, and is therefore reproducible and safe for CI environments.
-      - name: Install dependencies
-        run: npm ci
-
-      # ── 5. Build the production bundle ───────────────────────────────────────
-      # `vite build` compiles and tree-shakes the app, outputs to ./dist.
-      # Hashed filenames (e.g. index-BcD3f9xQ.js) are produced by Vite by default,
-      # enabling long-lived Cache-Control headers for assets.
-      # The shell's `pipefail` + `errexit` (set by GitHub by default) ensures any
-      # build error exits the step immediately with a non-zero code.
-      - name: Build production bundle
-        run: npm run build
-        env:
-          # Tell Node/Vite this is a CI environment (disables interactive prompts)
-          CI: "true"
-
-      # ── 6. Verify build output exists ────────────────────────────────────────
-      # An extra guard: fail loudly if the dist directory wasn't created,
-      # rather than deploying an empty bucket.
-      - name: Verify build output
+      # ── Step 5: Install dependencies (reproducible) ──────────────────────────
+      # `npm ci` installs exactly what package-lock.json specifies and refuses to
+      # mutate it — reproducible and safe for CI environments.
+      # --prefer-offline falls back to the registry only when a package is absent
+      # from the local cache, shaving seconds off warm runs.
+      - name: "Install dependencies"
+        shell: bash
         run: |
-          if [[ ! -d "${{ env.BUILD_DIR }}" ]]; then
-            echo "❌ Build output directory '${{ env.BUILD_DIR }}' not found."
-            echo "   Check your vite.config.js 'build.outDir' setting."
+          set -euo pipefail
+          npm ci --prefer-offline
+
+      # ── Step 6: Build production bundle ──────────────────────────────────────
+      # NODE_ENV=production: some libraries (React, Framer Motion) tree-shake
+      #   debug code only when this is set.
+      # CI=true: suppresses interactive prompts in Vite and any other tooling.
+      - name: "Build production bundle"
+        shell: bash
+        env:
+          CI:       "true"
+          NODE_ENV: "production"
+        run: |
+          set -euo pipefail
+          npm run build
+
+      # ── Step 7: Validate build output ────────────────────────────────────────
+      # Four fast guards run before a single byte is sent to AWS:
+      #   1. dist/ directory exists
+      #   2. dist/ contains at least one file (not empty)
+      #   3. dist/index.html exists (SPA entry point)
+      #   4. Total bundle size is within the configured threshold
+      - name: "Validate build output"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Guard 1: output directory must exist
+          if [[ ! -d "${BUILD_DIR}" ]]; then
+            echo "❌ Build directory '${BUILD_DIR}' not found."
+            echo "   Verify 'build.outDir' in vite.config.js matches BUILD_DIR='${BUILD_DIR}'."
             exit 1
           fi
-          echo "✅ Build directory found:"
-          ls -lh "${{ env.BUILD_DIR }}"
 
-      # ── 7. Authenticate to AWS via GitHub OIDC ────────────────────────────────
-      # This is the key step. GitHub mints a short-lived OIDC JWT, which is sent
-      # to AWS STS via AssumeRoleWithWebIdentity. AWS validates the JWT against
-      # the GitHub OIDC provider registered in your account and returns temporary
-      # credentials scoped to the IAM role.
+          # Guard 2: directory must not be empty
+          FILE_COUNT=$(find "${BUILD_DIR}" -type f | wc -l)
+          if [[ "${FILE_COUNT}" -eq 0 ]]; then
+            echo "❌ Build directory '${BUILD_DIR}' exists but contains no files."
+            exit 1
+          fi
+
+          # Guard 3: index.html must be present (SPA entry point)
+          if [[ ! -f "${BUILD_DIR}/index.html" ]]; then
+            echo "❌ '${BUILD_DIR}/index.html' not found — build may be misconfigured."
+            exit 1
+          fi
+
+          # Guard 4: bundle size must stay within threshold
+          TOTAL_KB=$(du -sk "${BUILD_DIR}" | cut -f1)
+          echo "📦 Build size: ${TOTAL_KB} KB  (limit: ${MAX_BUILD_SIZE_KB} KB)"
+          if [[ "${TOTAL_KB}" -gt "${MAX_BUILD_SIZE_KB}" ]]; then
+            echo "❌ Bundle size ${TOTAL_KB} KB exceeds limit ${MAX_BUILD_SIZE_KB} KB."
+            echo "   Run 'npm run build -- --report' to identify large dependencies."
+            exit 1
+          fi
+
+          echo "✅ Build validation passed — ${FILE_COUNT} files, ${TOTAL_KB} KB"
+          echo ""
+          echo "Build contents:"
+          ls -lhR "${BUILD_DIR}"
+
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 3 — AWS AUTHENTICATION
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 8: Authenticate to AWS via GitHub OIDC ──────────────────────────
+      # GitHub mints a short-lived OIDC JWT. This action exchanges it with AWS
+      # STS (AssumeRoleWithWebIdentity) for temporary session credentials.
       #
-      # ⚠️  NO long-lived AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are used.
-      # ⚠️  Credentials auto-expire after 1 hour (configurable on the IAM role).
-
-      # ── [TEMP DEBUG] ─────────────────────────────────────────────────────────
-      # The following three steps are TEMPORARY diagnostics for troubleshooting
-      # GitHub OIDC authentication. Remove them once OIDC succeeds consistently.
-      # ─────────────────────────────────────────────────────────────────────────
-
-      # [TEMP DEBUG 1/3] Print GitHub context values that AWS uses to evaluate
-      # the IAM role trust policy sub-claim condition. Compare these values
-      # against your IAM trust policy's StringLike / StringEquals conditions.
-      - name: "[TEMP DEBUG] Debug GitHub Context"
-        shell: bash
-        run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🔍 GitHub OIDC Context (used to build the 'sub' claim)"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "  repository  : ${{ github.repository }}"
-          echo "  ref         : ${{ github.ref }}"
-          echo "  ref_name    : ${{ github.ref_name }}"
-          echo "  event_name  : ${{ github.event_name }}"
-          echo "  actor       : ${{ github.actor }}"
-          echo "  workflow    : ${{ github.workflow }}"
-          echo "  run_id      : ${{ github.run_id }}"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo ""
-          echo "ℹ️  Expected 'sub' claim format:"
-          echo "   repo:${{ github.repository }}:ref:${{ github.ref }}"
-          echo ""
-          echo "   Your IAM trust policy condition must match this exact value."
-
-      # [TEMP DEBUG 2/3] Confirm AWS_ROLE_ARN secret is present in this run.
-      # Does NOT print the ARN itself to avoid leaking it into public logs.
-      - name: "[TEMP DEBUG] Validate AWS Role ARN"
-        shell: bash
-        env:
-          _AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        run: |
-          if [[ -z "$_AWS_ROLE_ARN" ]]; then
-            echo "❌ secrets.AWS_ROLE_ARN is not set for this run."
-            echo ""
-            echo "   Fix: Settings → Secrets and variables → Actions → New repository secret"
-            echo "   Name : AWS_ROLE_ARN"
-            echo "   Value: arn:aws:iam::<account-id>:role/<role-name>"
-            exit 1
-          fi
-          echo "✅ AWS_ROLE_ARN is configured."
-          echo "   (Value is intentionally not printed to protect the ARN.)"
-
-      # ── [END TEMP DEBUG PRE-OIDC] ─────────────────────────────────────────────
-
-      # [TEMP DEBUG 3/3 — on the OIDC step itself]
-      # ACTIONS_STEP_DEBUG=true enables verbose SDK logging inside the action.
-      # AWS_STS_REGIONAL_ENDPOINTS=regional forces STS calls to the regional
-      # endpoint (e.g. sts.ap-south-1.amazonaws.com) instead of the global one,
-      # which is required in some opt-in regions and avoids token-validation races.
-      # Neither env var changes any action input or deployment behaviour.
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v5
+      # Security properties:
+      #   • No long-lived AWS keys stored anywhere.
+      #   • Session credentials auto-expire after role-duration-seconds.
+      #   • role-session-name embeds run_id + run_attempt for full CloudTrail
+      #     traceability (every API call is attributed to this exact run).
+      #   • role-duration-seconds: 900 matches the job timeout — credentials
+      #     cannot outlive the job that created them.
+      #
+      # Pinned to commit SHA — aws-actions tags are mutable and can be moved.
+      - name: "Configure AWS credentials (OIDC)"
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502  # v4.1.0
         with:
-          role-to-assume:    ${{ secrets.AWS_ROLE_ARN }}
-          aws-region:        ${{ vars.AWS_REGION }}
-          # role-session-name is optional but helps audit CloudTrail logs
-          role-session-name: github-actions-deploy-${{ github.run_id }}
-        env:
-          # [TEMP DEBUG] Enable verbose step-level debug logging for this action.
-          # Remove once OIDC auth is confirmed working.
-          ACTIONS_STEP_DEBUG: "true"
-          # [TEMP DEBUG] Force regional STS endpoint to avoid global STS issues.
-          # Remove once OIDC auth is confirmed working.
-          AWS_STS_REGIONAL_ENDPOINTS: regional
+          role-to-assume:        ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:            ${{ vars.AWS_REGION }}
+          role-session-name:     "gha-deploy-${{ github.run_id }}-${{ github.run_attempt }}"
+          role-duration-seconds: 900
 
-      # [TEMP DEBUG] Print the assumed role identity immediately after OIDC succeeds.
-      # This confirms which account/role the runner is acting as.
-      # Remove once OIDC auth is confirmed working.
-      - name: "[TEMP DEBUG] Verify assumed role identity"
-        run: |
-          echo "🔍 Verifying assumed role via aws sts get-caller-identity ..."
-          aws sts get-caller-identity
-          echo ""
-          echo "✅ The above confirms OIDC succeeded and the correct role was assumed."
-
-      # [TEMP DEBUG] Failure hint — runs even if Configure AWS credentials fails
-      # (continue-on-error: true on the OIDC step above is NOT set intentionally;
-      # this step uses 'if: failure()' to catch the failure while still letting
-      # the job fail at the end).
-      # Remove once OIDC auth is confirmed working.
-      - name: "[TEMP DEBUG] OIDC failure diagnostics"
-        if: failure()
+      # ── Step 9: Verify caller identity + account guard ────────────────────────
+      # This is a PERMANENT production safety check, not a debug step:
+      #   1. Confirms OIDC succeeded (fast-fail before touching any resource).
+      #   2. Compares the live AWS account ID against vars.AWS_ACCOUNT_ID,
+      #      catching misconfigured role ARNs that would deploy to the wrong account.
+      - name: "Verify AWS identity and account ID"
         shell: bash
+        env:
+          EXPECTED_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
         run: |
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "❌ Configure AWS credentials failed — OIDC troubleshooting guide"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo ""
-          echo "Check each item below against your AWS IAM configuration:"
-          echo ""
-          echo "1. IAM Trust Policy"
-          echo "   • The role's trust policy must allow Action: sts:AssumeRoleWithWebIdentity"
-          echo "   • Principal must be: Federated: arn:aws:iam::<account>:oidc-provider/token.actions.githubusercontent.com"
-          echo ""
-          echo "2. GitHub OIDC Provider in AWS"
-          echo "   • Must exist in your AWS account under IAM → Identity providers"
-          echo "   • URL  : https://token.actions.githubusercontent.com"
-          echo "   • Audience (ClientID): sts.amazonaws.com"
-          echo ""
-          echo "3. Repository name in the trust condition"
-          echo "   • Your trust policy sub condition must match:"
-          echo "     repo:${{ github.repository }}:ref:refs/heads/${{ github.ref_name }}"
-          echo "   • A common mistake is using the wrong case, org name, or branch name."
-          echo ""
-          echo "4. Branch"
-          echo "   • This run was triggered from: ${{ github.ref }}"
-          echo "   • If your trust policy scopes to refs/heads/main, only pushes"
-          echo "     to 'main' will succeed. workflow_dispatch also uses the selected branch."
-          echo ""
-          echo "5. secrets.AWS_ROLE_ARN"
-          echo "   • Verify the ARN is correct: Settings → Secrets → AWS_ROLE_ARN"
-          echo "   • Format: arn:aws:iam::<12-digit-account-id>:role/<role-name>"
-          echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          set -euo pipefail
 
-      # ── [END TEMP DEBUG] ──────────────────────────────────────────────────────
+          IDENTITY=$(aws sts get-caller-identity \
+            --output json \
+            --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout    "${AWS_CLI_TIMEOUT_SECONDS}")
 
-      # ── 8. Sync build output to S3 ───────────────────────────────────────────
-      # `aws s3 sync` uploads only changed files, making deploys incremental.
-      #
-      # --delete              Removes files from S3 that no longer exist in dist/,
-      #                       keeping the bucket in sync with the build output.
-      #
-      # --cache-control for hashed assets:
-      #   Vite emits files like assets/index-BcD3f9xQ.js. Because the hash
-      #   changes with content, these files are immutable and can be cached
-      #     indefinitely (max-age=31536000, immutable).
-      #
-      # --cache-control for HTML:
-      #   index.html must NOT be aggressively cached — it is the entry point
-      #   and must always reflect the latest deploy. We set no-cache so browsers
-      #   always revalidate it.
-      #
-      # Two-pass sync strategy:
-      #   Pass 1 — upload hashed assets with long cache headers
-      #   Pass 2 — upload everything else (HTML, robots.txt, etc.) with no-cache
-      - name: Sync hashed assets to S3 (long cache)
+          ACTUAL_ACCOUNT=$(echo "${IDENTITY}" | python3 -c \
+            "import sys,json; print(json.load(sys.stdin)['Account'])")
+          ACTUAL_ARN=$(echo "${IDENTITY}" | python3 -c \
+            "import sys,json; print(json.load(sys.stdin)['Arn'])")
+
+          echo "🔐 AWS identity:"
+          echo "   Account  : ${ACTUAL_ACCOUNT}"
+          echo "   Role ARN : ${ACTUAL_ARN}"
+
+          if [[ "${ACTUAL_ACCOUNT}" != "${EXPECTED_ACCOUNT_ID}" ]]; then
+            echo ""
+            echo "❌ ACCOUNT MISMATCH — deployment aborted."
+            echo "   Expected : ${EXPECTED_ACCOUNT_ID}  (vars.AWS_ACCOUNT_ID)"
+            echo "   Actual   : ${ACTUAL_ACCOUNT}"
+            echo "   Cause    : Wrong IAM role ARN or wrong AWS account configured."
+            exit 1
+          fi
+
+          echo "✅ AWS account verified: ${ACTUAL_ACCOUNT}"
+
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 4 — INFRASTRUCTURE PRE-FLIGHT
+      # Verify target resources exist and are accessible before touching them.
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 10: Verify S3 bucket and CloudFront distribution ─────────────────
+      # Fail before uploading a single byte if target resources are missing or
+      # the IAM role lacks the required read permissions.
+      - name: "Pre-flight: verify S3 bucket and CloudFront distribution"
+        shell: bash
+        env:
+          S3_BUCKET:                  ${{ vars.S3_BUCKET }}
+          AWS_REGION:                 ${{ vars.AWS_REGION }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          aws s3 sync "${{ env.BUILD_DIR }}" "s3://${{ vars.S3_BUCKET }}" \
-            --region "${{ vars.AWS_REGION }}" \
+          set -euo pipefail
+
+          # Verify S3 bucket exists and role has s3:ListBucket on it.
+          # head-bucket returns 0 when the bucket exists and is accessible.
+          echo "🔍 Checking S3 bucket: s3://${S3_BUCKET}"
+          if ! aws s3api head-bucket \
+                --bucket "${S3_BUCKET}" \
+                --region "${AWS_REGION}" \
+                --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+                --cli-read-timeout    "${AWS_CLI_TIMEOUT_SECONDS}" 2>&1; then
+            echo "❌ S3 bucket '${S3_BUCKET}' is not accessible."
+            echo "   Verify the bucket exists and the IAM role has s3:ListBucket."
+            exit 1
+          fi
+          echo "✅ S3 bucket verified: s3://${S3_BUCKET}"
+
+          # Verify CloudFront distribution exists and is fully propagated.
+          CF_STATUS=$(aws cloudfront get-distribution \
+            --id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --query "Distribution.Status" \
+            --output text \
+            --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout    "${AWS_CLI_TIMEOUT_SECONDS}")
+
+          echo "🔍 CloudFront distribution status: ${CF_STATUS}"
+          if [[ "${CF_STATUS}" != "Deployed" ]]; then
+            echo "❌ CloudFront distribution '${CLOUDFRONT_DISTRIBUTION_ID}'"
+            echo "   is not in 'Deployed' state (current: ${CF_STATUS})."
+            echo "   A previous deployment may still be propagating."
+            exit 1
+          fi
+          echo "✅ CloudFront distribution verified: ${CLOUDFRONT_DISTRIBUTION_ID}"
+
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 5 — DEPLOYMENT
+      #
+      # Atomic-ordered S3 sync: hashed assets FIRST, HTML LAST.
+      #
+      # Why the order matters:
+      #   If a user loads the new index.html while we are still uploading assets,
+      #   the browser requests the new hashed JS/CSS filenames — which must
+      #   already be in S3. Uploading assets before HTML ensures this is always
+      #   true. The --delete flag runs only in the second pass to avoid a brief
+      #   window where valid old assets are deleted before new HTML is live.
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 11: Upload hashed assets (1-year cache, immutable) ──────────────
+      # Vite emits content-addressed filenames like assets/index-BcD3f9xQ.js.
+      # Because the hash changes whenever content changes, these URLs are
+      # effectively immutable — browsers and CDN can cache them for 1 year.
+      #
+      # --metadata-directive REPLACE: overwrites Cache-Control on existing objects
+      #   (aws s3 sync does not update metadata by default without this flag).
+      # --no-progress / --only-show-errors: reduce log noise in CI.
+      - name: "Deploy: sync hashed assets → S3  (cache: 1 year, immutable)"
+        shell: bash
+        env:
+          S3_BUCKET:  ${{ vars.S3_BUCKET }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          set -euo pipefail
+
+          echo "📤 Uploading hashed assets (long-lived cache)…"
+          aws s3 sync "${BUILD_DIR}" "s3://${S3_BUCKET}" \
+            --region               "${AWS_REGION}" \
+            --exclude              "*" \
+            --include              "assets/*" \
+            --cache-control        "public, max-age=31536000, immutable" \
+            --metadata-directive   REPLACE \
+            --no-progress \
+            --only-show-errors \
+            --cli-connect-timeout  "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout     "${AWS_CLI_TIMEOUT_SECONDS}"
+
+          echo "✅ Hashed assets uploaded."
+
+      # ── Step 12: Upload non-hashed files (no-cache) ───────────────────────────
+      # index.html, 404.html, robots.txt, sitemap.xml, favicon.ico, etc.
+      # These must NEVER be stale — browsers must always revalidate them.
+      # Uploaded AFTER hashed assets (see ordering rationale above).
+      #
+      # --delete: removes files from S3 that no longer exist in dist/, keeping
+      #   the bucket in perfect sync with the build output. Only run here (on
+      #   the final pass) to avoid prematurely deleting old hashed assets.
+      - name: "Deploy: sync non-hashed files → S3  (cache: no-cache)"
+        shell: bash
+        env:
+          S3_BUCKET:  ${{ vars.S3_BUCKET }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          set -euo pipefail
+
+          echo "📤 Uploading non-hashed files (no-cache)…"
+          aws s3 sync "${BUILD_DIR}" "s3://${S3_BUCKET}" \
+            --region               "${AWS_REGION}" \
+            --exclude              "assets/*" \
+            --cache-control        "no-cache, no-store, must-revalidate" \
+            --metadata-directive   REPLACE \
             --delete \
-            --exclude "*" \
-            --include "assets/*" \
-            --cache-control "public, max-age=31536000, immutable" \
-            --metadata-directive REPLACE
+            --no-progress \
+            --only-show-errors \
+            --cli-connect-timeout  "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout     "${AWS_CLI_TIMEOUT_SECONDS}"
 
-      - name: Sync remaining files to S3 (no cache)
-        run: |
-          aws s3 sync "${{ env.BUILD_DIR }}" "s3://${{ vars.S3_BUCKET }}" \
-            --region "${{ vars.AWS_REGION }}" \
-            --delete \
-            --exclude "assets/*" \
-            --cache-control "no-cache, no-store, must-revalidate" \
-            --metadata-directive REPLACE
+          echo "✅ Non-hashed files uploaded."
 
-      # ── 9. Invalidate CloudFront cache ────────────────────────────────────────
-      # After S3 is updated, CloudFront edge nodes may still serve stale cached
-      # responses. Invalidating /index.html forces all edges to fetch the new
-      # version from S3 on the next request.
+      # ── Step 13: Invalidate CloudFront (entry points only) ────────────────────
+      # Invalidate only the non-hashed HTML entry points that browsers or the
+      # CDN may have cached. Hashed assets are NOT invalidated — their filenames
+      # change with every build, so stale old URLs are never requested again.
       #
-      # Hashed asset files (e.g. assets/index-BcD3f9xQ.js) are NOT invalidated:
-      #   • Their filenames change with every build (content-hash), so CloudFront
-      #     will naturally serve the new file — the old URL is never requested again.
-      #   • Unnecessary invalidations cost money ($0.005 per 1,000 paths after
-      #     the free 1,000/month threshold) and add latency to the deployment.
+      # /404.html is included for SPAs: CloudFront typically serves index.html
+      # for unknown routes (custom error response); some setups use 404.html.
       #
-      # Additional paths to add if your app has other non-hashed entry points
-      # (e.g. a 404.html for SPA routing), append them to the --paths argument.
-      - name: Invalidate CloudFront cache for index.html
+      # Cost: AWS provides 1,000 free invalidation paths/month; after that,
+      # $0.005/path. Two paths per deploy ≈ $0 for most projects.
+      - name: "Deploy: invalidate CloudFront (entry points only)"
+        shell: bash
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
+          set -euo pipefail
+
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
-            --paths "/index.html" \
-            --query "Invalidation.Id" \
-            --output text)
+            --distribution-id  "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths            "/index.html" "/404.html" \
+            --query            "Invalidation.Id" \
+            --output           text \
+            --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout    "${AWS_CLI_TIMEOUT_SECONDS}")
 
-          echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
-          echo "   Distribution: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
-          echo "   Paths invalidated: /index.html"
+          echo "✅ CloudFront invalidation submitted."
+          echo "   Invalidation ID : ${INVALIDATION_ID}"
+          echo "   Distribution    : ${CLOUDFRONT_DISTRIBUTION_ID}"
+          echo "   Paths           : /index.html  /404.html"
           echo ""
-          echo "ℹ️  Hashed assets (assets/*) are NOT invalidated — their URLs"
-          echo "    change with each build, so old URLs are never requested again."
+          echo "ℹ️  Hashed assets (assets/*) are NOT invalidated — their filenames"
+          echo "   change each build, so old stale URLs are never served."
 
-      # ── 10. Deployment summary ────────────────────────────────────────────────
-      # Print a concise deployment summary to the job log for easy auditing.
-      - name: Deployment summary
+      # ════════════════════════════════════════════════════════════════════════
+      # PHASE 6 — POST-DEPLOYMENT
+      # ════════════════════════════════════════════════════════════════════════
+
+      # ── Step 14: Write GitHub Job Summary (success) ───────────────────────────
+      # Writes a formatted Markdown table to the Actions "Summary" tab.
+      # Visible at: Actions → <run> → Summary.
+      # Gives any team member an at-a-glance deployment receipt without
+      # requiring access to the raw step logs.
+      - name: "Post-deployment summary"
+        if: success()
+        shell: bash
+        env:
+          S3_BUCKET:                  ${{ vars.S3_BUCKET }}
+          AWS_REGION:                 ${{ vars.AWS_REGION }}
+          CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
+          set -euo pipefail
+
+          DEPLOY_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BUILD_SIZE_KB=$(du -sk "${BUILD_DIR}" | cut -f1)
+
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🚀 Deployment complete — BolatiPustake.in"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "  Commit    : ${{ github.sha }}"
-          echo "  Branch    : ${{ github.ref_name }}"
-          echo "  Actor     : ${{ github.actor }}"
-          echo "  Run ID    : ${{ github.run_id }}"
-          echo "  S3 Bucket : s3://${{ vars.S3_BUCKET }}"
-          echo "  Region    : ${{ vars.AWS_REGION }}"
-          echo "  CF Dist   : ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "  Commit      : ${{ github.sha }}"
+          echo "  Branch      : ${{ github.ref_name }}"
+          echo "  Actor       : ${{ github.actor }}"
+          echo "  Run         : ${{ github.run_id }} (attempt ${{ github.run_attempt }})"
+          echo "  Deployed at : ${DEPLOY_TIME}"
+          echo "  Build size  : ${BUILD_SIZE_KB} KB"
+          echo "  S3 Bucket   : s3://${S3_BUCKET}  (${AWS_REGION})"
+          echo "  CF Dist     : ${CLOUDFRONT_DISTRIBUTION_ID}"
+          echo "  Live URL    : https://bolatipustake.in"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # GitHub Job Summary (rendered as Markdown in the Actions Summary tab)
+          cat >> "${GITHUB_STEP_SUMMARY}" << SUMMARY
+          ## 🚀 Deployment Complete — BolatiPustake.in
+
+          | Field | Value |
+          |---|---|
+          | **Status** | ✅ Success |
+          | **Commit** | \`${{ github.sha }}\` |
+          | **Branch** | \`${{ github.ref_name }}\` |
+          | **Actor** | \`${{ github.actor }}\` |
+          | **Run** | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) (attempt ${{ github.run_attempt }}) |
+          | **Deployed at** | \`${DEPLOY_TIME}\` |
+          | **Build size** | \`${BUILD_SIZE_KB} KB\` |
+          | **S3 Bucket** | \`s3://${S3_BUCKET}\` (${AWS_REGION}) |
+          | **CloudFront** | \`${CLOUDFRONT_DISTRIBUTION_ID}\` |
+          | **Live URL** | [https://bolatipustake.in](https://bolatipustake.in) |
+
+          > **Rollback hint:** Re-run any previous successful workflow from the [Actions tab](https://github.com/${{ github.repository }}/actions) to restore the previous deployment.
+          SUMMARY
+
+      # ── Step 15: Write GitHub Job Summary (failure) ───────────────────────────
+      # Runs on any failure, giving on-call engineers a direct link to the
+      # failed run and a clear rollback path without digging through raw logs.
+      - name: "Failure summary"
+        if: failure()
+        shell: bash
+        run: |
+          cat >> "${GITHUB_STEP_SUMMARY}" << SUMMARY
+          ## ❌ Deployment Failed — BolatiPustake.in
+
+          | Field | Value |
+          |---|---|
+          | **Commit** | \`${{ github.sha }}\` |
+          | **Branch** | \`${{ github.ref_name }}\` |
+          | **Actor** | \`${{ github.actor }}\` |
+          | **Run** | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+
+          **Next steps:**
+          1. Review the failed step in the [run log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          2. Fix the root cause and push a new commit to \`main\`.
+          3. If S3 was partially updated, re-run the previous successful deployment from the Actions tab.
+          SUMMARY
