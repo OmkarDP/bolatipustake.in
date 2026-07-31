@@ -201,7 +201,7 @@ jobs:
       # which is required in some opt-in regions and avoids token-validation races.
       # Neither env var changes any action input or deployment behaviour.
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5git 
         with:
           role-to-assume:    ${{ secrets.AWS_ROLE_ARN }}
           aws-region:        ${{ vars.AWS_REGION }}
