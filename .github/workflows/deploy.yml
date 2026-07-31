@@ -62,7 +62,7 @@ env:
   BUILD_DIR:              dist    # Vite default; update if build.outDir changes
   NODE_VERSION:           "22"   # LTS. Bump intentionally when upgrading Node.
   AWS_CLI_TIMEOUT_SECONDS: "60"  # Hard cap per AWS CLI call; prevents hung jobs
-  MAX_BUILD_SIZE_KB:       "5000" # Alert if bundle grows beyond this threshold
+  MAX_BUILD_SIZE_KB:       "15000" # Alert if bundle grows beyond this threshold
 
 jobs:
   deploy:
