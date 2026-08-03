@@ -218,6 +218,20 @@ export const translations = {
       successMsg: 'धन्यवाद! तुमचा संदेश यशस्वीरीत्या पाठवला गेला आहे.',
       errorMsg: 'दिलगीर आहोत! संदेश पाठवताना अडचण आली. कृपया नंतर प्रयत्न करा किंवा ईमेल/व्हॉट्सॲप द्वारे संपर्क करा.'
     },
+    // FAQ Section
+    faq: {
+      tag: 'प्रश्नोत्तरे',
+      title: 'नेहमी विचारले जाणारे प्रश्न (FAQ)',
+      subtitle: 'बोलती पुस्तके उपक्रमाविषयी थोडक्यात माहिती',
+      q1: 'बोलती पुस्तके म्हणजे काय? (What is Bolati Pustake?)',
+      a1: 'बोलती पुस्तके ही मराठी साहित्याचा प्रसार करण्यासाठी आणि दृष्टिहीन तसेच साहित्यप्रेमी बांधवांसाठी दर्जेदार ऑडिओबुक्स, कादंबऱ्या व कथांचे सुश्राव्य अभिवाचन पुरवणारी एक प्रमुख सांस्कृतिक व भावनिक चळवळ आहे.',
+      q2: 'बोलती पुस्तके वर कोणती पुस्तके उपलब्ध आहेत?',
+      a2: 'बोलती पुस्तके डिजिटल प्लॅटफॉर्मवर ३००+ हून अधिक प्रसिद्ध मराठी कादंबऱ्या आणि ५०००+ हून अधिक लघुकथांचे उत्कृष्ट अभिवाचन उपलब्ध आहे.',
+      q3: 'बोलती पुस्तके चळवळीचे संस्थापक कोण आहेत?',
+      a3: 'बोलती पुस्तके या उपक्रमाची सुरुवात कोरोना काळातील टाळेबंदीदरम्यान ज्येष्ठ अभिवाचक श्री. दशरथ पाटील यांच्या कल्पकतेतून व पुढाकारातून झाली.',
+      q4: 'बोलती पुस्तके कसे ऐकायचे?',
+      a4: 'तुम्ही आमचे अधिकृत संकेतस्थळ (bolatipustake.in) आणि YouTube चॅनेल्स (@bolati_pustake) द्वारे विनामूल्य सर्व ऑडिओबुक्स ऐकू शकता.'
+    },
     // Sitemap Section
     sitemap: {
       tag: 'संरचना आणि मार्गदर्शिका',
@@ -508,6 +522,20 @@ export const translations = {
         { title: 'Accessibility & Ease of Use', desc: 'Legible typography and accessible navigation for visually impaired and senior listeners.' },
         { title: 'Blazing Fast Performance (Vite)', desc: 'Optimized code bundling and rapid page loading speed.' }
       ]
+    },
+    // FAQ Section
+    faq: {
+      tag: 'FAQ',
+      title: 'Frequently Asked Questions',
+      subtitle: 'Learn more about the Bolati Pustake movement',
+      q1: 'What is Bolati Pustake?',
+      a1: 'Bolati Pustake is a cultural and literary initiative dedicated to making high-quality Marathi audiobooks, classic novels, and short story narrations freely accessible to literature enthusiasts and visually impaired listeners worldwide.',
+      q2: 'What books are available on Bolati Pustake?',
+      a2: 'Over 300+ renowned Marathi novels and 5,000+ short story narrations are available across our platform and YouTube channels.',
+      q3: 'Who is the founder of Bolati Pustake?',
+      a3: 'Bolati Pustake was founded during the COVID-19 lockdown by veteran narrator Mr. Dasharath Patil to bring literary warmth into homes.',
+      q4: 'How can I listen to Bolati Pustake?',
+      a4: 'You can listen to all narrated audiobooks for free on our official website (bolatipustake.in) and YouTube channels (@bolati_pustake).'
     },
     // Footer Section
     footer: {

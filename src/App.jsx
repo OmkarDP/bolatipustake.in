@@ -9,6 +9,7 @@ import WhyUs from './components/WhyUs';
 import Literature from './components/Literature';
 import SupportCTA from './components/SupportCTA';
 import Contact from './components/Contact';
+import FAQ from './components/FAQ';
 import Sitemap from './components/Sitemap';
 import Footer from './components/Footer';
 import { LanguageProvider } from './context/LanguageContext';
@@ -47,6 +48,9 @@ function AppContent() {
         
         {/* Contact Form, Info, and Embedded Google Map */}
         <Contact />
+        
+        {/* Frequently Asked Questions */}
+        <FAQ />
         
         {/* Website Structure & Interactive Sitemap */}
         <Sitemap />
