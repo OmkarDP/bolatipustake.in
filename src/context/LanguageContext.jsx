@@ -63,15 +63,6 @@ export const translations = {
       stat4Label: 'प्रतिष्ठित लेखक व प्रकाशक',
       stat4Desc: 'अभिजात आणि ज्येष्ठ लेखकांपासून ते नवोदित साहित्यिकांपर्यंत.'
     },
-    // Visitor Counter
-    visitorCounter: {
-      badgeText: 'रसिक श्रोते भेट:',
-      activeText: 'सध्या {count} रसिक ऑनलाईन ऐकत आहेत',
-      cardTitle: 'एकूण डिजिटल भेट देणारे',
-      cardDesc: 'बोलती पुस्तके चळवळीला भेट देऊन साहित्याचा आनंद घेणारे रसिक श्रोते.',
-      liveBadge: 'थेट कार्यरत',
-      activeBadge: 'सध्या {count} रसिक संकेतस्थळावर उपस्थित आहेत'
-    },
     // Journey Section
     journey: {
       tag: 'कालक्रम',
@@ -335,15 +326,6 @@ export const translations = {
       stat4Num: 'Numerous',
       stat4Label: 'Renowned Authors & Publishers',
       stat4Desc: 'Ranging from legendary classics to contemporary authors.'
-    },
-    // Visitor Counter
-    visitorCounter: {
-      badgeText: 'Total Visitor Visits:',
-      activeText: 'Currently {count} listeners online',
-      cardTitle: 'Total Digital Visitors',
-      cardDesc: 'Enthusiastic listeners visiting and enjoying the Bolati Pustake movement.',
-      liveBadge: 'LIVE ONLINE',
-      activeBadge: 'Currently {count} active listeners on website'
     },
     // Journey Section
     journey: {

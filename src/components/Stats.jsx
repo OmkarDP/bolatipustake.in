@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Mic, Heart, PenTool } from 'lucide-react';
-import VisitorCounter from './VisitorCounter';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Stats() {
@@ -66,11 +65,6 @@ export default function Stats() {
               </p>
             </motion.div>
           ))}
-        </div>
-
-        {/* Website Visitor Count Section */}
-        <div className="mt-12 max-w-md mx-auto">
-          <VisitorCounter />
         </div>
       </div>
     </section>

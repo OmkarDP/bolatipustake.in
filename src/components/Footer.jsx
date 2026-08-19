@@ -1,6 +1,5 @@
 import React from 'react';
 import { Mail, Phone } from 'lucide-react';
-import VisitorCounter from './VisitorCounter';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
@@ -137,14 +136,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-cream/60 text-center gap-6">
-          <p className="order-2 md:order-1">
+        <div className="border-t border-gold/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-cream/60 text-center gap-4">
+          <p>
             &copy; {currentYear} Bolati Pustake (बोलती पुस्तके | bolatipustake.in). {t('footer.rights')}
           </p>
-          <div className="order-1 md:order-2 my-2 md:my-0">
-            <VisitorCounter variant="compact" />
-          </div>
-          <p className="font-serif italic text-gold-light order-3">
+          <p className="font-serif italic text-gold-light">
             {t('footer.founderFooter')}
           </p>
         </div>
