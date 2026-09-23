@@ -347,6 +347,179 @@ npm run lint
 
 ---
 
+## 🚀 CI/CD — GitHub Actions Deployment Pipeline
+
+The site is automatically deployed to **AWS S3 + CloudFront** on every push to `main` via a GitHub Actions workflow ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+
+> **Zero long-lived credentials** — authentication uses **GitHub OIDC**, so no AWS access keys are ever stored in GitHub Secrets.
+
+---
+
+### 🔄 Workflow Overview
+
+The workflow is structured into **6 phases**, running on `ubuntu-latest` with a hard 15-minute job timeout:
+
+```
+Phase 1 — Pre-flight checks      Validate secrets/variables + enforce main-only deployment
+Phase 2 — Build                  Checkout → Setup Node 22 → npm ci → vite build
+Phase 3 — AWS Authentication     Exchange GitHub OIDC JWT for temporary AWS session credentials
+Phase 4 — Infrastructure check   Verify S3 bucket + CloudFront distribution are accessible
+Phase 5 — Deployment             Atomic-ordered two-pass S3 sync + CloudFront invalidation
+Phase 6 — Post-deployment        Write Markdown summary to the Actions "Summary" tab
+```
+
+**Triggers:**
+- `push` to `main` branch — automatic production deploy
+- `workflow_dispatch` — manual deploy from the GitHub Actions UI (main-only guard enforced)
+
+**Concurrency:** A newer push cancels any in-progress run (`cancel-in-progress: true`) to prevent two deploys from racing and leaving S3 in an inconsistent state.
+
+---
+
+### 🔐 GitHub OIDC Authentication
+
+GitHub mints a short-lived OIDC JWT for each workflow run. The [`aws-actions/configure-aws-credentials`](https://github.com/aws-actions/configure-aws-credentials) action exchanges it with **AWS STS `AssumeRoleWithWebIdentity`** for temporary credentials.
+
+**Security properties:**
+- ✅ No long-lived AWS access keys stored anywhere
+- ✅ Session credentials auto-expire after 900 seconds (matches job timeout)
+- ✅ `role-session-name` embeds `run_id` + `run_attempt` for full **CloudTrail traceability**
+- ✅ Account guard: verifies `sts get-caller-identity` account matches `vars.AWS_ACCOUNT_ID` before touching any resource
+
+```yaml
+permissions:
+  contents: read    # actions/checkout needs to clone the repo
+  id-token: write   # required to mint the OIDC JWT
+```
+
+---
+
+### ⚙️ Required Repository Configuration
+
+Go to **Settings → Secrets and variables → Actions** to add these:
+
+#### Variables (`vars.*`)
+
+| Variable | Example Value | Description |
+|---|---|---|
+| `AWS_REGION` | `ap-south-1` | AWS region where S3 + CloudFront live |
+| `AWS_ACCOUNT_ID` | `508375325181` | AWS account ID (guards wrong-account deploys) |
+| `S3_BUCKET` | `bolatipustake-in-prod` | S3 bucket name |
+| `CLOUDFRONT_DISTRIBUTION_ID` | `EXXXXXXXXXXXX` | CloudFront distribution ID |
+
+#### Secrets (`secrets.*`)
+
+| Secret | Example Value | Description |
+|---|---|---|
+| `AWS_ROLE_ARN` | `arn:aws:iam::508375325181:role/OIDC-bolatipustake.in` | Full ARN of the IAM role to assume |
+
+---
+
+### 🏗️ One-Time AWS Setup
+
+#### 1. Add GitHub as an OIDC Identity Provider
+
+In **IAM → Identity providers → Add provider**:
+
+| Field | Value |
+|---|---|
+| Provider type | `OpenID Connect` |
+| Provider URL | `https://token.actions.githubusercontent.com` |
+| Audience | `sts.amazonaws.com` |
+
+#### 2. Create the IAM Role
+
+Create a role with the following **trust policy** (see [`role.json`](role.json) in the repo root):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:sub": "repo:OmkarDP/bolatipustake.in:ref:refs/heads/main"
+        }
+      }
+    }
+  ]
+}
+```
+
+> ⚠️ **Use `StringEquals`, not `StringLike`** — wildcards in `StringLike` allow unintended repos or branches to assume this role.
+
+#### 3. Attach IAM Permissions Policy
+
+The role needs only the minimum permissions to deploy:
+
+| Permission | Resource | Why |
+|---|---|---|
+| `s3:ListBucket` | `arn:aws:s3:::bolatipustake-in-prod` | Pre-flight bucket check |
+| `s3:PutObject`, `s3:DeleteObject`, `s3:GetObject` | `arn:aws:s3:::bolatipustake-in-prod/*` | Upload build files + clean stale files |
+| `cloudfront:GetDistribution` | Distribution ARN | Pre-flight status check |
+| `cloudfront:CreateInvalidation` | Distribution ARN | Cache invalidation after deploy |
+
+---
+
+### 📦 S3 Sync Strategy (Atomic-Ordered Two-Pass)
+
+The deployment uses a **two-pass ordered sync** to guarantee zero broken page loads during a deploy:
+
+```
+Pass 1 → Upload hashed assets (assets/*)     Cache-Control: public, max-age=31536000, immutable
+Pass 2 → Upload non-hashed files             Cache-Control: no-cache, no-store, must-revalidate
+         (index.html, robots.txt, etc.)       + --delete (removes stale files from S3)
+```
+
+**Why this order matters:** If a user loads the new `index.html` while assets are still uploading, the browser requests new hashed filenames (e.g., `assets/index-BcD3f9xQ.js`) — which **must already be in S3**. Uploading assets before HTML ensures this invariant is always satisfied.
+
+**Build validation** runs before any S3 upload with four guards:
+1. `dist/` directory exists
+2. `dist/` is not empty
+3. `dist/index.html` exists (SPA entry point)
+4. Total bundle size ≤ `15,000 KB` threshold
+
+---
+
+### ⚡ CloudFront Invalidation
+
+After upload, only **entry-point paths** are invalidated (not hashed assets):
+
+```
+/index.html   — Main SPA entry point
+/404.html     — Custom error page (for SPA route fallback)
+```
+
+Hashed assets (`assets/*`) are **not invalidated** — their filenames change with every build, so no browser or CDN ever serves a stale hashed URL.
+
+> 💰 AWS provides **1,000 free invalidation paths/month**. Two paths per deploy = ~$0 cost for typical usage.
+
+---
+
+### 📋 Deployment Summary
+
+Every successful run writes a Markdown summary to the **Actions → Summary** tab:
+
+| Field | Value |
+|---|---|
+| Status | ✅ Success |
+| Commit | SHA of deployed commit |
+| Branch | `main` |
+| Build size | Total `dist/` size in KB |
+| S3 Bucket | Bucket name + region |
+| CloudFront | Distribution ID |
+| Live URL | [https://bolatipustake.in](https://bolatipustake.in) |
+
+> **Rollback:** Re-run any previous successful workflow from the **Actions** tab to restore the previous deployment instantly.
+
+---
+
 ## 🌍 Environment & Deployment
 
 This is a **static Single-Page Application (SPA)** — there is no backend server. It can be deployed to any static hosting platform:
