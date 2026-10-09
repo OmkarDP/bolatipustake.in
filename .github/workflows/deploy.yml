@@ -7,14 +7,14 @@
 # ┌─ Required GitHub repository Variables ────────────────────────────────────┐
 # │  (Settings → Secrets and variables → Variables)                           │
 # │  AWS_REGION                  e.g.  ap-south-1                             │
-# │  AWS_ACCOUNT_ID              e.g.  508375325181  ← guards wrong-account   │
-# │  S3_BUCKET                   e.g.  bolatipustake-in-prod                  │
+# │  AWS_ACCOUNT_ID              your AWS account ID                         │
+# │  S3_BUCKET                   your deployment bucket                      │
 # │  CLOUDFRONT_DISTRIBUTION_ID  e.g.  EXXXXXXXXXXXX                          │
 # └───────────────────────────────────────────────────────────────────────────┘
 #
 # ┌─ Required GitHub repository Secrets ──────────────────────────────────────┐
 # │  (Settings → Secrets and variables → Secrets)                             │
-# │  AWS_ROLE_ARN  e.g.  arn:aws:iam::508375325181:role/OIDC-bolatipustake.in │
+# │  AWS_ROLE_ARN  your OIDC role ARN                                         │
 # └───────────────────────────────────────────────────────────────────────────┘
 #
 # ┌─ IAM Trust Policy prerequisite (one-time setup) ──────────────────────────┐

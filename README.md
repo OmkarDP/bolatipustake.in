@@ -309,18 +309,18 @@ Central i18n system:
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- **Node.js** `>=18.x`
+- **Node.js** `>=20.19.0` or `>=22.12.0`
 - **npm** `>=9.x` or **pnpm**
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/OmkarDP/BolatiPustakeWeb.git
-cd BolatiPustakeWeb
+git clone https://github.com/OmkarDP/bolatipustake.in.git
+cd bolatipustake.in
 ```
 
 ### 2. Install Dependencies
 ```bash
-npm install
+npm ci
 ```
 
 ### 3. Start Development Server
@@ -403,15 +403,15 @@ Go to **Settings → Secrets and variables → Actions** to add these:
 | Variable | Example Value | Description |
 |---|---|---|
 | `AWS_REGION` | `ap-south-1` | AWS region where S3 + CloudFront live |
-| `AWS_ACCOUNT_ID` | `508375325181` | AWS account ID (guards wrong-account deploys) |
-| `S3_BUCKET` | `bolatipustake-in-prod` | S3 bucket name |
+| `AWS_ACCOUNT_ID` | `<AWS_ACCOUNT_ID>` | AWS account ID (guards wrong-account deploys) |
+| `S3_BUCKET` | `<S3_BUCKET>` | S3 bucket name |
 | `CLOUDFRONT_DISTRIBUTION_ID` | `EXXXXXXXXXXXX` | CloudFront distribution ID |
 
 #### Secrets (`secrets.*`)
 
 | Secret | Example Value | Description |
 |---|---|---|
-| `AWS_ROLE_ARN` | `arn:aws:iam::508375325181:role/OIDC-bolatipustake.in` | Full ARN of the IAM role to assume |
+| `AWS_ROLE_ARN` | `arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>` | Full ARN of the IAM role to assume |
 
 ---
 
@@ -429,7 +429,7 @@ In **IAM → Identity providers → Add provider**:
 
 #### 2. Create the IAM Role
 
-Create a role with the following **trust policy** (see [`role.json`](role.json) in the repo root):
+Create a role with the following **trust policy** (see [`role-policy.template.json`](role-policy.template.json) in the repo root). Replace `<AWS_ACCOUNT_ID>` with your AWS account ID before applying it.
 
 ```json
 {
@@ -460,8 +460,8 @@ The role needs only the minimum permissions to deploy:
 
 | Permission | Resource | Why |
 |---|---|---|
-| `s3:ListBucket` | `arn:aws:s3:::bolatipustake-in-prod` | Pre-flight bucket check |
-| `s3:PutObject`, `s3:DeleteObject`, `s3:GetObject` | `arn:aws:s3:::bolatipustake-in-prod/*` | Upload build files + clean stale files |
+| `s3:ListBucket` | `arn:aws:s3:::<S3_BUCKET>` | Pre-flight bucket check |
+| `s3:PutObject`, `s3:DeleteObject`, `s3:GetObject` | `arn:aws:s3:::<S3_BUCKET>/*` | Upload build files + clean stale files |
 | `cloudfront:GetDistribution` | Distribution ARN | Pre-flight status check |
 | `cloudfront:CreateInvalidation` | Distribution ARN | Cache invalidation after deploy |
 
