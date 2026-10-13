@@ -17,6 +17,7 @@ export default function Journey() {
 
   const steps = rawSteps.map((step, idx) => ({
     ...step,
+    year: idx === 0 ? 'May 2026' : step.year,
     icon: icons[idx % icons.length],
     color: colors[idx % colors.length]
   }));
