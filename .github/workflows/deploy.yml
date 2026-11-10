@@ -419,6 +419,40 @@ jobs:
 
           echo "✅ Non-hashed files uploaded."
 
+      # S3 REST origins do not resolve directory indexes for clean routes.
+      # Publish the policy page at both route keys so /privacy and /privacy/
+      # work without depending on a CloudFront SPA fallback.
+      - name: "Deploy: publish clean privacy routes"
+        shell: bash
+        env:
+          S3_BUCKET:  ${{ vars.S3_BUCKET }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          set -euo pipefail
+
+          aws s3 cp "${BUILD_DIR}/privacy/index.html" "s3://${S3_BUCKET}/privacy" \
+            --region "${AWS_REGION}" \
+            --content-type "text/html; charset=utf-8" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --metadata-directive REPLACE \
+            --no-progress \
+            --only-show-errors \
+            --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout "${AWS_CLI_TIMEOUT_SECONDS}"
+
+          aws s3api put-object \
+            --bucket "${S3_BUCKET}" \
+            --key "privacy/" \
+            --body "${BUILD_DIR}/privacy/index.html" \
+            --region "${AWS_REGION}" \
+            --content-type "text/html; charset=utf-8" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --cli-read-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
+            --no-cli-pager
+
+          echo "✅ Clean privacy routes published."
+
       # ── Step 13: Invalidate CloudFront (entry points only) ────────────────────
       # Invalidate only the non-hashed HTML entry points that browsers or the
       # CDN may have cached. Hashed assets are NOT invalidated — their filenames
@@ -428,7 +462,7 @@ jobs:
       # for unknown routes (custom error response); some setups use 404.html.
       #
       # Cost: AWS provides 1,000 free invalidation paths/month; after that,
-      # $0.005/path. Two paths per deploy ≈ $0 for most projects.
+      # $0.005/path. Five paths per deploy ≈ $0 for most projects.
       - name: "Deploy: invalidate CloudFront (entry points only)"
         shell: bash
         env:
@@ -438,7 +472,7 @@ jobs:
 
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
             --distribution-id  "${CLOUDFRONT_DISTRIBUTION_ID}" \
-            --paths            "/index.html" "/404.html" \
+            --paths            "/index.html" "/404.html" "/privacy" "/privacy/" "/privacy.html" \
             --query            "Invalidation.Id" \
             --output           text \
             --cli-connect-timeout "${AWS_CLI_TIMEOUT_SECONDS}" \
@@ -447,7 +481,7 @@ jobs:
           echo "✅ CloudFront invalidation submitted."
           echo "   Invalidation ID : ${INVALIDATION_ID}"
           echo "   Distribution    : ${CLOUDFRONT_DISTRIBUTION_ID}"
-          echo "   Paths           : /index.html  /404.html"
+          echo "   Paths           : /index.html  /404.html  /privacy  /privacy/  /privacy.html"
           echo ""
           echo "ℹ️  Hashed assets (assets/*) are NOT invalidated — their filenames"
           echo "   change each build, so old stale URLs are never served."

@@ -116,7 +116,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2 text-sm text-cream/80">
               <li>
-                <a href="#privacy" className="hover:text-gold transition-colors duration-200">
+                <a href="/privacy" className="hover:text-gold transition-colors duration-200">
                   {t('footer.privacyPolicy')}
                 </a>
               </li>
